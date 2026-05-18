@@ -1,0 +1,19 @@
+{
+  "name": "local.graph_expand",
+  "description": "Resolve Local Bio-KB aliases and expand DRAG graph relations for evidence paths.",
+  "input_schema": {
+    "type": "object",
+    "required": ["query"],
+    "properties": {
+      "query": {"type": "string"},
+      "limit": {"type": "integer", "default": 10}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "nodes": {"type": "array"},
+      "edges": {"type": "array"}
+    }
+  }
+}

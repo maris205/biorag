@@ -1,0 +1,25 @@
+kb:
+  root: /autodl-fs/data/open-rosalind-kb/standard
+  raw_dir: /autodl-fs/data/open-rosalind-kb/standard/raw
+  index_dir: /root/autodl-tmp/dnarag/data/heldout
+  sqlite_path: /autodl-fs/data/open-rosalind-kb/standard/index/open_rosalind_standard.sqlite
+  manifest_path: /autodl-fs/data/open-rosalind-kb/standard/index/manifest.json
+  blast_db: /root/autodl-tmp/dnarag/data/heldout/blast/protein_parent_frag_500_controlled20k_index
+  blast_fasta: /root/autodl-tmp/dnarag/data/heldout/protein_parent_frag_500_controlled20k_index.fasta
+  blastn_db: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna
+  blastn_fasta: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna.fasta
+  graph_dir: indexes/heldout_parent_frag_500_controlled20k_esm2_mean/graph
+  vector_dir: indexes/heldout_parent_frag_500_controlled20k_esm2_mean/vector
+
+embedding:
+  model: facebook/esm2_t33_650M_UR50D
+  pooling: mean
+  dtype: bf16
+  batch_size: 16
+
+retrieval:
+  local_first: true
+  fallback_public_api: false
+  default_modes:
+    - blast
+    - vector

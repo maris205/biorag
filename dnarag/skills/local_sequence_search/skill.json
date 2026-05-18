@@ -1,0 +1,21 @@
+{
+  "name": "local.sequence_search",
+  "description": "Detect biological sequence input and search the local Swiss-Prot BLAST database.",
+  "input_schema": {
+    "type": "object",
+    "required": ["sequence"],
+    "properties": {
+      "sequence": {"type": "string"},
+      "max_targets": {"type": "integer", "default": 5}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "route": {"type": "string"},
+      "status": {"type": "string"},
+      "sequence_type": {"type": "string"},
+      "hits": {"type": "array"}
+    }
+  }
+}

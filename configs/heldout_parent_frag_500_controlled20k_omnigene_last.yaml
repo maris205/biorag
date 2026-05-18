@@ -1,0 +1,25 @@
+kb:
+  root: /autodl-fs/data/open-rosalind-kb/standard
+  raw_dir: /autodl-fs/data/open-rosalind-kb/standard/raw
+  index_dir: /root/autodl-tmp/dnarag/data/heldout
+  sqlite_path: /autodl-fs/data/open-rosalind-kb/standard/index/open_rosalind_standard.sqlite
+  manifest_path: /autodl-fs/data/open-rosalind-kb/standard/index/manifest.json
+  blast_db: /root/autodl-tmp/dnarag/data/heldout/blast/protein_parent_frag_500_controlled20k_index
+  blast_fasta: /root/autodl-tmp/dnarag/data/heldout/protein_parent_frag_500_controlled20k_index.fasta
+  blastn_db: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna
+  blastn_fasta: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna.fasta
+  graph_dir: indexes/heldout_parent_frag_500_controlled20k_omnigene_last/graph
+  vector_dir: indexes/heldout_parent_frag_500_controlled20k_omnigene_last/vector
+
+embedding:
+  model: /root/autodl-tmp/huggingface/models--dnagpt--OmniGene-4-CPT-v2-merged/snapshots/332ed9582f41547beb2a2b6de228c9e53aae5500
+  pooling: last
+  dtype: bf16
+  batch_size: 1
+
+retrieval:
+  local_first: true
+  fallback_public_api: false
+  default_modes:
+    - blast
+    - vector

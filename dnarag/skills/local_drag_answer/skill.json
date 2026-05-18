@@ -1,0 +1,42 @@
+{
+  "name": "local.drag_answer",
+  "description": "Build a local DRAG answer scaffold with citations, modality views, graph paths, and a prompt-ready evidence pack.",
+  "input_schema": {
+    "type": "object",
+    "required": ["query"],
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Natural language, gene/protein/variant term, or biological sequence."
+      },
+      "retrieval_modes": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["fts", "blast", "vector", "graph"]
+        },
+        "default": ["fts", "blast", "vector", "graph"]
+      },
+      "context_limit": {
+        "type": "integer",
+        "default": 8
+      },
+      "vector_target": {
+        "type": "string",
+        "enum": ["text", "protein_sequence", "dna_sequence", "mixed"]
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "answer": {"type": "string"},
+      "citations": {"type": "array"},
+      "graph_paths": {"type": "array"},
+      "modality_views": {"type": "object"},
+      "generation_prompt": {"type": "string"},
+      "retrieval_trace": {"type": "array"},
+      "local_coverage": {"type": "number"}
+    }
+  }
+}

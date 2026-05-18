@@ -1,0 +1,27 @@
+kb:
+  root: /autodl-fs/data/open-rosalind-kb/standard
+  raw_dir: /autodl-fs/data/open-rosalind-kb/standard/raw
+  index_dir: /autodl-fs/data/open-rosalind-kb/standard/index
+  sqlite_path: /autodl-fs/data/open-rosalind-kb/standard/index/open_rosalind_standard.sqlite
+  manifest_path: /autodl-fs/data/open-rosalind-kb/standard/index/manifest.json
+  blast_db: /autodl-fs/data/open-rosalind-kb/standard/index/blast/swissprot
+  blast_fasta: /autodl-fs/data/open-rosalind-kb/standard/index/blast/swissprot.fasta
+  blastn_db: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna
+  blastn_fasta: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna.fasta
+  graph_dir: indexes/standard/graph
+  vector_dir: indexes/standard/vector
+
+embedding:
+  model: /root/autodl-tmp/huggingface/models--dnagpt--OmniGene-4-CPT-v2-merged/snapshots/332ed9582f41547beb2a2b6de228c9e53aae5500
+  pooling: mean
+  dtype: bf16
+  batch_size: 1
+
+retrieval:
+  local_first: true
+  fallback_public_api: false
+  default_modes:
+    - fts
+    - blast
+    - graph
+    - vector

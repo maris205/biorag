@@ -1,0 +1,12 @@
+{"id":"gene_brca1","category":"gene_lookup","query":"BRCA1","expected":{"entity_ids":["hgnc_gene:HGNC:1100"],"symbols":["BRCA1"]}}
+{"id":"gene_tp53","category":"gene_lookup","query":"TP53","expected":{"entity_ids":["hgnc_gene:HGNC:11998"],"symbols":["TP53"]}}
+{"id":"gene_egfr","category":"gene_lookup","query":"EGFR","expected":{"entity_ids":["hgnc_gene:HGNC:3236"],"symbols":["EGFR"]}}
+{"id":"gene_kras","category":"gene_lookup","query":"KRAS","expected":{"entity_ids":["hgnc_gene:HGNC:6407"],"symbols":["KRAS"]}}
+{"id":"gene_pten","category":"gene_lookup","query":"PTEN","expected":{"entity_ids":["hgnc_gene:HGNC:9588"],"symbols":["PTEN"]}}
+{"id":"pathway_dna_repair","category":"pathway_lookup","query":"DNA repair","expected":{"entity_ids":["reactome_pathway:R-HSA-73894"],"title_contains":["DNA Repair"]}}
+{"id":"pathway_apoptosis","category":"pathway_lookup","query":"Apoptosis","expected":{"entity_ids":["reactome_pathway:R-HSA-109581"],"title_contains":["Apoptosis"]}}
+{"id":"pathway_mapk","category":"pathway_lookup","query":"MAPK family signaling cascades","expected":{"entity_ids":["reactome_pathway:R-HSA-5683057"],"title_contains":["MAPK family signaling cascades"]}}
+{"id":"protein_q6gzx4_fragment","category":"protein_sequence","query":"MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHFSGIKYKGEKAQASEVDVNKMCCWVSKFKDAMRRYQGIQTCKIPGKVLSDLD","expected":{"entity_ids":["protein_sequence:Q6GZX4"],"source_ids":["Q6GZX4"],"accessions":["Q6GZX4"]}}
+{"id":"protein_q6gzx3_fragment","category":"protein_sequence","query":"MSIIGATRLQNDKSDTYSAGPCYAGGCSAFTPRGTCGKDWDLGEQTCASGFCTSQPLCARIKKTQVCGLRYSSKGKDPLVSAEWDSRGAPYVRCTYDADLIDTQAQVDQFVSMFGESPSL","expected":{"entity_ids":["protein_sequence:Q6GZX3"],"source_ids":["Q6GZX3"],"accessions":["Q6GZX3"]}}
+{"id":"dna_enst00622028_fragment","category":"dna_sequence","query":"ATGGACTGGAATTGGAGGATCCTGTTTTTGGTGGTCATAGCTGCGGGTGCCCAGTCCCAGGTACAGCTGGTGCAGTCTGGGGCTGAGGTGAAGAAGCCTGGGGCCTCAGTGAAGGTCTCC","expected":{"entity_ids":["dna_sequence:ENST00000622028.1"],"source_ids":["ENST00000622028.1"],"accessions":["ENST00000622028.1"]}}
+{"id":"dna_enst00632585_fragment","category":"dna_sequence","query":"ATAAAATCTGTGCTGTCAAACTGATTAGGAACTGACTACCACCTGCAGGTCAGGGCCAAGGTTATGGGGTCCCAGGTTCACCTCCTCAGCTTCCTCCTCCTTTGGATCTCTGATACCAGG","expected":{"entity_ids":["dna_sequence:ENST00000632585.1"],"source_ids":["ENST00000632585.1"],"accessions":["ENST00000632585.1"]}}

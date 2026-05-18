@@ -1,0 +1,45 @@
+{
+  "name": "local.hybrid_bio_search",
+  "description": "Local-first biological retrieval over FTS, BLAST, vector, and DRAG graph evidence.",
+  "input_schema": {
+    "type": "object",
+    "required": ["query"],
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Natural language, gene/protein/variant term, or biological sequence."
+      },
+      "query_type": {
+        "type": "string",
+        "default": "auto",
+        "enum": ["auto", "gene", "protein", "sequence", "variant", "pathway", "literature"]
+      },
+      "local_first": {
+        "type": "boolean",
+        "default": true
+      },
+      "fallback_public_api": {
+        "type": "boolean",
+        "default": false
+      },
+      "retrieval_modes": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["fts", "blast", "vector", "graph"]
+        },
+        "default": ["fts", "blast", "vector", "graph"]
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "answer_context": {"type": "array"},
+      "evidence": {"type": "array"},
+      "retrieval_trace": {"type": "array"},
+      "local_coverage": {"type": "number"},
+      "fallback_used": {"type": "boolean"}
+    }
+  }
+}

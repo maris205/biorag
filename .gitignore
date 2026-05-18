@@ -1,0 +1,45 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# Local/editor state
+.claude/
+.ipynb_checkpoints/
+id.txt
+
+# Local data and generated indexes
+data/
+indexes/
+runs/
+outputs/
+*.sqlite
+*.sqlite-*
+
+# Large detailed experiment outputs. Keep compact Markdown summaries tracked.
+reports/**/*.json
+reports/**/*.jsonl
+reports/**/*.html
+reports/**/*.svg
+reports/traces/
+reports/figures/*.html
+reports/figures/*.svg
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
+
+# Downloaded upstream/reference material kept in this workspace
+/open-rosalind/
+/omnigene4/
+/*.pdf

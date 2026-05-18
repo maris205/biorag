@@ -1,0 +1,38 @@
+[
+  {
+    "panel": "A",
+    "title": "DNA/cDNA IGKV evidence subgraph",
+    "trace_file": "reports/traces/dna_igkv2_40_hybrid_trace.json",
+    "focus": "IGKV",
+    "nodes": 18,
+    "edges": 25,
+    "trace_summary": {
+      "traces": 3,
+      "avg_context_nodes": 10.3333,
+      "avg_context_edges": 12.0,
+      "avg_focus_label_neighbor_hits": 2.0,
+      "relation_counts": {
+        "blast_neighbor": 9,
+        "vector_neighbor": 27
+      }
+    }
+  },
+  {
+    "panel": "B",
+    "title": "Protein yfbR evidence subgraph",
+    "trace_file": "reports/traces/protein_yfbr_hybrid_trace.json",
+    "focus": "yfbR",
+    "nodes": 19,
+    "edges": 29,
+    "trace_summary": {
+      "traces": 3,
+      "avg_context_nodes": 11.3333,
+      "avg_context_edges": 12.0,
+      "avg_focus_label_neighbor_hits": 10.3333,
+      "relation_counts": {
+        "blast_neighbor": 15,
+        "vector_neighbor": 21
+      }
+    }
+  }
+]

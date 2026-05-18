@@ -1,0 +1,42 @@
+[project]
+name = "dnarag"
+version = "0.1.0"
+description = "Open-Rosalind Local Bio-KB and Hybrid BioRAG scaffold"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+vector = [
+    "torch>=2.0",
+    "transformers>=4.35",
+    "bitsandbytes>=0.43",
+    "faiss-cpu>=1.8",
+    "pyarrow>=14",
+]
+gguf = [
+    "llama-cpp-python>=0.3.23",
+]
+chroma = [
+    "chromadb>=1.5",
+]
+test = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+dnarag = "dnarag.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["dnarag*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,500 @@
+A0A0E3D8M5	janD	JAND_PENJA	Penicillium janthinellum
+A0A0E3D8P4	penG	PENG_PENCR	Penicillium crustosum
+A0A0G4KL96	EIX3	EIX3_VERLO	Verticillium longisporum
+A0A0H2XFP1	esaA	ESAA_STAA3	Staphylococcus aureus (strain USA300)
+A0A1B2CTB6	penB	PENB_PENTH	Penicillium thymicola
+A0A1V6NVX3	verB	VERB_PENPO	Penicillium polonicum
+A0A1W5T1U1	poxE	POXE_PENOX	Penicillium oxalicum
+A0A2I0C265	PMIX	PLM9_PLAFO	Plasmodium falciparum (isolate NF54)
+A0A455ZIM5	ppzB	PPZB_METMF	Metarhizium majus (strain ARSEF 297)
+A0A7H0DN01	OPG025	PG025_MONPV	Monkeypox virus
+A0A8I6GM68	Hdac6	HDAC6_RAT	Rattus norvegicus
+A0JM24	noxred1	NXRD1_XENTR	Xenopus tropicalis
+A1CFL6	patI	PATI_ASPCL	Aspergillus clavatus (strain ATCC 1007 / CBS 513.65 / DSM 816 / NCTC 3887 / NRRL 1 / QM 1276 / 107)
+A1T9W4	secA3	SECA3_MYCVP	Mycolicibacterium vanbaalenii (strain DSM 7251 / JCM 13017 / BCRC 16820 / KCTC 9966 / NRRL B-24157 / PYR-1)
+A1W446	hisE	HIS2_ACISJ	Acidovorax sp. (strain JS42)
+A1ZA77	Tmem208	TM208_DROME	Drosophila melanogaster
+A2R0Z5	chsE	CHSE_ASPNC	Aspergillus niger (strain ATCC MYA-4892 / CBS 513.88 / FGSC A1513)
+A2RMI2	atpD	ATPB_LACLM	Lactococcus lactis subsp. cremoris (strain MG1363)
+A2WK50	RBBI3.3	IBBR_ORYSI	Oryza sativa subsp. indica
+A2WXD9	PSBS1	PSBS1_ORYSI	Oryza sativa subsp. indica
+A2YXQ1	PCF2	PCF2_ORYSI	Oryza sativa subsp. indica
+A3DBA0	tuf2	EFTU2_SHEB5	Shewanella baltica (strain OS155 / ATCC BAA-1091)
+A4IFN5	FITM2	FITM2_BOVIN	Bos taurus
+A5E1Y3	IML2	IML2_LODEL	Lodderomyces elongisporus (strain ATCC 11503 / CBS 2605 / JCM 1781 / NBRC 1676 / NRRL YB-4239)
+A5IXT1	engB	ENGB_MYCAP	Mycoplasmopsis agalactiae (strain NCTC 10123 / CIP 59.7 / PG2)
+A6NI79	CCDC69	CCD69_HUMAN	Homo sapiens
+A6NM28	ZFP92	ZFP92_HUMAN	Homo sapiens
+A6QQM8	CCDC42	CCD42_BOVIN	Bos taurus
+A6VHG7	rps15	RS15_METM7	Methanococcus maripaludis (strain C7 / ATCC BAA-1331)
+A7TQS2	SHE10	SHE10_VANPO	Vanderwaltozyma polyspora (strain ATCC 22028 / DSM 70294 / BCRC 21397 / CBS 2163 / NBRC 10782 / NRRL Y-8283 / UCD 57-17)
+A7ZKW0	dadA	DADA_ECO24	Escherichia coli O139:H28 (strain E24377A / ETEC)
+A8AHD6	astE	ASTE_CITK8	Citrobacter koseri (strain ATCC BAA-895 / CDC 4225-83 / SGSC4696)
+A8WVM4	rme-6	GAPD1_CAEBR	Caenorhabditis briggsae
+A9N712	diaA	DIAA_SALPB	Salmonella paratyphi B (strain ATCC BAA-1250 / SPB7)
+A9TXT1	CERK1	CERK1_PHYPA	Physcomitrium patens
+B0S8V2	hisF	HIS6_LEPBA	Leptospira biflexa serovar Patoc (strain Patoc 1 / Ames)
+B0ZTE1	sox21	SOX21_XENLA	Xenopus laevis
+B1MIC7	mmpL8	MMPL8_MYCA9	Mycobacteroides abscessus (strain ATCC 19977 / DSM 44196 / CCUG 20993 / CIP 104536 / JCM 13569 / NCTC 13031 / TMC 1543 / L948)
+B2RUR4	Kprp	KPRP_MOUSE	Mus musculus
+B4YQU1	FAH12	FAH12_CLAPU	Claviceps purpurea
+B5QUU8	lpxH	LPXH_SALEP	Salmonella enteritidis PT4 (strain P125109)
+B5WWZ8	FAO1	FAO1_LOTJA	Lotus japonicus
+B6HN82	penM	PENM_PENRW	Penicillium rubens (strain ATCC 28089 / DSM 1075 / NRRL 1951 / Wisconsin 54-1255)
+B7ECS8	BGLU9	BGL09_ORYSJ	Oryza sativa subsp. japonica
+B8BI93	MYBS2	MYBS2_ORYSI	Oryza sativa subsp. indica
+B8JKP6	greb1l	GRB1L_DANRE	Danio rerio
+B9LQ96	trpD	TRPD_HALLT	Halorubrum lacusprofundi (strain ATCC 49239 / DSM 5036 / JCM 8891 / ACAM 34)
+C0HLF1	tstD	TSTD_DICDI	Dictyostelium discoideum
+C0SP91	yycJ	YYCJ_BACSU	Bacillus subtilis (strain 168)
+C1AN30	pyrF	PYRF_MYCBT	Mycobacterium bovis (strain BCG / Tokyo 172 / ATCC 35737 / TMC 1019)
+C4KHE3	rrp42	RRP42_SACI6	Saccharolobus islandicus (strain M.16.4 / Kamchatka #3)
+C4ZWC8	lptE	LPTE_ECOBW	Escherichia coli (strain K12 / MC4100 / BW2952)
+C5DSG3	SKG1	SKG1_ZYGRC	Zygosaccharomyces rouxii (strain ATCC 2623 / CBS 732 / NBRC 1130 / NCYC 568 / NRRL Y-229)
+C5M5D9	CCM1	CCM1_CANTT	Candida tropicalis (strain ATCC MYA-3404 / T1)
+C6C2E5	dbpB	DBPB_BORBN	Borreliella burgdorferi (strain N40)
+C6TA59	HAL3B	HAL3B_SOYBN	Glycine max
+C7B178	VPY	VPY_PETHY	Petunia hybrida
+C8VQ98	ausM	AUSM_EMENI	Emericella nidulans (strain FGSC A4 / ATCC 38163 / CBS 112.46 / NRRL 194 / M139)
+D3WYW0	levG	LSC_LACGS	Lactobacillus gasseri
+D3Z3I0	Cdc20b	CD20B_MOUSE	Mus musculus
+D4I1C3	mzrA	MZRA_ERWAC	Erwinia amylovora (strain CFBP1430)
+E3PRK0	kce	KCE_ACESD	Acetoanaerobium sticklandii (strain ATCC 12662 / DSM 519 / JCM 1433 / CCUG 9281 / NCIMB 10654 / HF)
+E5RJM6	ANKRD65	ANR65_HUMAN	Homo sapiens
+E9Q7X6	Heg1	HEG1_MOUSE	Mus musculus
+F1R0H0	slc2a10	GTR10_DANRE	Danio rerio
+F1SVH1	rgyB	RGYRB_METKA	Methanopyrus kandleri (strain AV19 / DSM 6324 / JCM 9639 / NBRC 100938)
+F4HVJ3	POD1	POD1_ARATH	Arabidopsis thaliana
+F4J8L3	KIN7K	KN7K_ARATH	Arabidopsis thaliana
+G0SDN0	CDC50	CDC50_CHATD	Chaetomium thermophilum (strain DSM 1495 / CBS 144.50 / IMI 039719)
+G2Q9A6	mycB	MYCB_THET4	Thermothelomyces thermophilus (strain ATCC 42464 / BCRC 31852 / DSM 1799)
+G3FFN6	purZ	PURZ_BPVC8	Vibrio phage phiVC8
+G5EGK5	cam-1	CAM1_CAEEL	Caenorhabditis elegans
+H3JUC3	JAL15	JA15R_ARATH	Arabidopsis thaliana
+L0MXX3	PaMT	FC8_PHOAM	Phomopsis amygdali
+M4QN28	wbdA	WBDA_ECOLX	Escherichia coli
+O00102	ubc7	UBC7_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O02833	IGFALS	ALS_PAPHA	Papio hamadryas
+O08340	gltD	GLTD_CERSP	Cereibacter sphaeroides
+O08545	Efna3	EFNA3_MOUSE	Mus musculus
+O09029	BHLHE22	BHE22_MESAU	Mesocricetus auratus
+O09110	Map2k3	MP2K3_MOUSE	Mus musculus
+O13705	sec10	SEC10_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O13796	rqc1	RCQ1_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O13994	kei1	KEI1_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O14448	SUM1	KAPR_PYRO7	Pyricularia oryzae (strain 70-15 / ATCC MYA-4617 / FGSC 8958)
+O14520	AQP7	AQP7_HUMAN	Homo sapiens
+O14593	RFXANK	RFXK_HUMAN	Homo sapiens
+O14639	ABLIM1	ABLM1_HUMAN	Homo sapiens
+O14645	DNALI1	IDLC_HUMAN	Homo sapiens
+O15432	SLC31A2	COPT2_HUMAN	Homo sapiens
+O31930	yopH	YOPH_BACSU	Bacillus subtilis (strain 168)
+O35454	Clcn6	CLCN6_MOUSE	Mus musculus
+O42131	TOP2B	TOP2B_CHICK	Gallus gallus
+O42852	sec20	SEC20_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O43236	SEPTIN4	SEPT4_HUMAN	Homo sapiens
+O43543	XRCC2	XRCC2_HUMAN	Homo sapiens
+O50172	bfr1	BFR1_PARME	Paramagnetospirillum magnetotacticum
+O54831	Prl7a2	PR7A2_MOUSE	Mus musculus
+O57382	tll2	TLL2_XENLA	Xenopus laevis
+O59790	ark1	AURK_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O64218	24	VG24_BPMD2	Mycobacterium phage D29
+O68932	hopD	HOPD_ECOLX	Escherichia coli
+O74427	urk1	URK1_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O74512	wtf14	WTF14_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+O75888	TNFSF13	TNF13_HUMAN	Homo sapiens
+O76337	ced-6	CED6_CAEEL	Caenorhabditis elegans
+O81862	ChiC	CHIC_ARATH	Arabidopsis thaliana
+O82903	yubK	YUBK_ECO57	Escherichia coli O157:H7
+O88491	Nsd1	NSD1_MOUSE	Mus musculus
+O95866	MPIG6B	G6B_HUMAN	Homo sapiens
+P00440	T	TYRO_NEUCR	Neurospora crassa (strain ATCC 24698 / 74-OR23-1A / CBS 708.71 / DSM 1257 / FGSC 987)
+P02974	pilE1	FMM1_NEIGO	Neisseria gonorrhoeae
+P04978	ptxB	TOX2_BORPE	Bordetella pertussis (strain Tohama I / ATCC BAA-589 / NCTC 13251)
+P05154	SERPINA5	IPSP_HUMAN	Homo sapiens
+P07276	RAD2	RAD2_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P07769	benA	BENA_ACIAD	Acinetobacter baylyi (strain ATCC 33305 / BD413 / ADP1)
+P08437	H3-I	H3_VOLCA	Volvox carteri
+P08487	PLCG1	PLCG1_BOVIN	Bos taurus
+P09693	CD3G	CD3G_HUMAN	Homo sapiens
+P0A1K7	spaO	SPAO_SALDU	Salmonella dublin
+P0A2X4	exoA	EXOA_STRR6	Streptococcus pneumoniae (strain ATCC BAA-255 / R6)
+P0A458	avaIR	T2A1_ANAVA	Anabaena variabilis
+P0A5I3	ispH2	ISPH2_MYCBO	Mycobacterium bovis (strain ATCC BAA-935 / AF2122/97)
+P0A9K9	slyD	SLYD_ECOLI	Escherichia coli (strain K12)
+P0A9V8	yihU	SQUU_ECOLI	Escherichia coli (strain K12)
+P0ACT3	envR	ENVR_ECO57	Escherichia coli O157:H7
+P0ADU8	yqiB	YQIB_ECOL6	Escherichia coli O6:H1 (strain CFT073 / ATCC 700928 / UPEC)
+P0C0L3	osmC	OSMC_SHIFL	Shigella flexneri
+P0C1A6	pelL	PLYL_DICCH	Dickeya chrysanthemi
+P0C6P1	emp	EMP_STAAU	Staphylococcus aureus
+P0CX31	RPS24A	RS24A_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P0CY39	RPS23A	RS23A_NAUCA	Naumovozyma castellii
+P0DMS9	TMIGD3	TMIG3_HUMAN	Homo sapiens
+P0DPR1	ha-33	HA33D_CBDP	Clostridium botulinum D phage
+P0DXB1	cas12m	CS12M_MYCMU	Mycolicibacterium mucogenicum
+P10938	PNMT	PNMT_BOVIN	Bos taurus
+P12829	MYL4	MYL4_HUMAN	Homo sapiens
+P15248	IL9	IL9_HUMAN	Homo sapiens
+P15436	POL3	DPOD_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P15991	HSPB1	HSPB1_CRILO	Cricetulus longicaudatus
+P16686	phnH	PHNH_ECOLI	Escherichia coli (strain K12)
+P18948	vit-6	VIT6_CAEEL	Caenorhabditis elegans
+P19726	10	CAPSA_BPT7	Escherichia phage T7
+P21965	MCK1	MCK1_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P23359	Bmp7	BMP7_MOUSE	Mus musculus
+P23727	PIK3R1	P85A_BOVIN	Bos taurus
+P23756	rbcS	RBS_GALSU	Galdieria sulphuraria
+P25573	MGR1	MGR1_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P25951	D4L	D2_RFVKA	Rabbit fibroma virus (strain Kasza)
+P28634	trmO	TRMO_ECOLI	Escherichia coli (strain K12)
+P28750	exu	EXU_DROME	Drosophila melanogaster
+P29237	luxG	LUXG_PHOLE	Photobacterium leiognathi
+P29371	TACR3	NK3R_HUMAN	Homo sapiens
+P30178	hcxB	HCXB_ECOLI	Escherichia coli (strain K12)
+P31688	TPS2	TPS2_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P32069	ASA2	TRPX_ARATH	Arabidopsis thaliana
+P32326	ureR	URER_ECOLX	Escherichia coli
+P32904	MRPL6	RM06_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P33052	OPG102	MCE_VAR67	Variola virus (isolate Human/India/Ind3/1967)
+P33363	bglX	BGLX_ECOLI	Escherichia coli (strain K12)
+P35345	Mc5r	MC5R_RAT	Rattus norvegicus
+P35796	pecA	PHEA_NOSS1	Nostoc sp. (strain PCC 7120 / SAG 25.82 / UTEX 2576)
+P36007	SRY1	LTHAD_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P36973	APT2	APT2_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P37385	synA	ATSY_SYNE7	Synechococcus elongatus (strain ATCC 33912 / PCC 7942 / FACHB-805)
+P37837	TALDO1	TALDO_HUMAN	Homo sapiens
+P39161	uxuR	UXUR_ECOLI	Escherichia coli (strain K12)
+P39382	yjiK	YJIK_ECOLI	Escherichia coli (strain K12)
+P39937	PAC2	PAC2_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P41570	Pgd	6PGD_CERCA	Ceratitis capitata
+P42693	rotA	PPIA_ACIAD	Acinetobacter baylyi (strain ATCC 33305 / BD413 / ADP1)
+P49135	Ercc3	ERCC3_MOUSE	Mus musculus
+P49373	tfs1	TFS2_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+P53060	RMR1	RMR1_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+P54830	Ptpn5	PTN5_MOUSE	Mus musculus
+P55689	nifW	NIFW_SINFN	Sinorhizobium fredii (strain NBRC 101917 / NGR234)
+P59053	Kcng3	KCNG3_MOUSE	Mus musculus
+P59384	Adamts15	ATS15_MOUSE	Mus musculus
+P64637	yrfG	YRFG_SHIFL	Shigella flexneri
+P65591	nusG	NUSG_NEIMA	Neisseria meningitidis serogroup A / serotype 4A (strain DSM 15465 / Z2491)
+P67096	yfcE	YFCE_ECOL6	Escherichia coli O6:H1 (strain CFT073 / ATCC 700928 / UPEC)
+P68142	actba	ACTB1_TAKRU	Takifugu rubripes
+P68970	IX	CAP9_ADE03	Human adenovirus B serotype 3
+P69066	sicA	SICA_SALTY	Salmonella typhimurium (strain LT2 / SGSC1412 / ATCC 700720)
+P71060	epsK	EPSK_BACSU	Bacillus subtilis (strain 168)
+P73689	sppA	SPPA_SYNY3	Synechocystis sp. (strain ATCC 27184 / PCC 6803 / Kazusa)
+P75214	adh	ADH_MYCPN	Mycoplasma pneumoniae (strain ATCC 29342 / M129 / Subtype 1)
+P78325	ADAM8	ADAM8_HUMAN	Homo sapiens
+P79942	noct	NOCT_XENLA	Xenopus laevis
+P81122	Irs2	IRS2_MOUSE	Mus musculus
+P84653	hba1	HBA1_COTGO	Cottoperca gobio
+P87047	HSP70-1	HSP71_PARBA	Paracoccidioides lutzii (strain ATCC MYA-826 / Pb01)
+P91134	adss-1	PURA_CAEEL	Caenorhabditis elegans
+P92204	Nelf-E	NELFE_DROME	Drosophila melanogaster
+P94367	cydD	CYDD_BACSU	Bacillus subtilis (strain 168)
+P95907	glpK2	GLPK2_SACS2	Saccharolobus solfataricus (strain ATCC 35092 / DSM 1617 / JCM 11322 / P2)
+P97677	Dll1	DLL1_RAT	Rattus norvegicus
+P98167	SSPO	SSPO_BOVIN	Bos taurus
+P9WGB1	cobM	COBM_MYCTU	Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)
+P9WH10	rmlC	RMLC_MYCTO	Mycobacterium tuberculosis (strain CDC 1551 / Oshkosh)
+P9WHY2	PPE51	PPE51_MYCTO	Mycobacterium tuberculosis (strain CDC 1551 / Oshkosh)
+P9WHZ9	PPE38	PPE38_MYCTU	Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)
+P9WI20	PPE21	PPE21_MYCTO	Mycobacterium tuberculosis (strain CDC 1551 / Oshkosh)
+P9WJ96	iniB	INIB_MYCTO	Mycobacterium tuberculosis (strain CDC 1551 / Oshkosh)
+P9WM67	fcoT	INLPD_MYCTU	Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)
+P9WMG4	mce2R	MCE2R_MYCTO	Mycobacterium tuberculosis (strain CDC 1551 / Oshkosh)
+P9WNB9	nei1	END8A_MYCTU	Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)
+Q00103	ORF72	VG72_ICHVA	Ictalurid herpesvirus 1 (strain Auburn)
+Q01042	73	ICP22_SHV21	Saimiriine herpesvirus 2 (strain 11)
+Q01114	Il9r	IL9R_MOUSE	Mus musculus
+Q01198	ligD	LIGD_SPHSK	Sphingobium sp. (strain NBRC 103272 / SYK-6)
+Q02197	MAK10	NAA35_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+Q03112	MECOM	MECOM_HUMAN	Homo sapiens
+Q03144	SNO1	SNO1_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+Q04566	GP2a	GP2A_PRRSL	Porcine reproductive and respiratory syndrome virus (strain Lelystad)
+Q04C45	alr	ALR_LACDB	Lactobacillus delbrueckii subsp. bulgaricus (strain ATCC BAA-365 / Lb-18)
+Q05126	ORF26	Y034_NPVOP	Orgyia pseudotsugata multicapsid polyhedrosis virus
+Q05B18	shq1	SHQ1_XENTR	Xenopus tropicalis
+Q06003	gol	GOLI_DROME	Drosophila melanogaster
+Q06675	MCM21	CENPO_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+Q06AU5	RAB32	RAB32_PIG	Sus scrofa
+Q07171	Gel	GELS_DROME	Drosophila melanogaster
+Q07523	Hao2	HAOX2_RAT	Rattus norvegicus
+Q07598	SCP2	SCP2_CHICK	Gallus gallus
+Q075Z2	BSPH1	BSPH1_HUMAN	Homo sapiens
+Q08999	RBL2	RBL2_HUMAN	Homo sapiens
+Q08BU1	med8	MED8_XENTR	Xenopus tropicalis
+Q0D3I7	WOX11	WOX11_ORYSJ	Oryza sativa subsp. japonica
+Q0DHL4	FTSH8	FTSH8_ORYSJ	Oryza sativa subsp. japonica
+Q0DV32	4CLL1	4CLL1_ORYSJ	Oryza sativa subsp. japonica
+Q0I508	torD	TORD_HISS1	Histophilus somni (strain 129Pt)
+Q0JPT4	BZR2	BZR2_ORYSJ	Oryza sativa subsp. japonica
+Q0P4V4	dnaaf2	KTU_XENTR	Xenopus tropicalis
+Q0P4Z1	retreg3	RETR3_XENTR	Xenopus tropicalis
+Q0V8J1	WSB2	WSB2_BOVIN	Bos taurus
+Q12310	PRR2	PRR2_YEAST	Saccharomyces cerevisiae (strain ATCC 204508 / S288c)
+Q12F39	bioB1	BIOB1_POLSJ	Polaromonas sp. (strain JS666 / ATCC BAA-500)
+Q13IW9	atpA3	ATPA3_PARXL	Paraburkholderia xenovorans (strain LB400)
+Q14257	RCN2	RCN2_HUMAN	Homo sapiens
+Q14590	ZNF235	ZN235_HUMAN	Homo sapiens
+Q19KI0	RHCG	RHCG_PIG	Sus scrofa
+Q1GC88	dapE1	DAPE1_RUEST	Ruegeria sp. (strain TM1040)
+Q1KL13	hoxa4a	HXA4A_TAKRU	Takifugu rubripes
+Q1MRD4	dxr	DXR_LAWIP	Lawsonia intracellularis (strain PHE/MN1-00)
+Q23886	mrps12	RT12_DICDI	Dictyostelium discoideum
+Q23892	gluA	GLUA_DICDI	Dictyostelium discoideum
+Q24JK4	XRCC1	XRCC1_ARATH	Arabidopsis thaliana
+Q24JY7	IFI27L2	I27L2_BOVIN	Bos taurus
+Q28949	MAN2B2	MA2B2_PIG	Sus scrofa
+Q28I03	airim	AIRIM_XENTR	Xenopus tropicalis
+Q2HWF0	Fnbp1l	FBP1L_RAT	Rattus norvegicus
+Q2KHM9	KIAA0753	MOONR_HUMAN	Homo sapiens
+Q2KJI7	AFG3L2	AFG32_BOVIN	Bos taurus
+Q2LY16	cbiO	CBIO_SYNAS	Syntrophus aciditrophicus (strain SB)
+Q2M5Q2	pseF	PSEF_CAMJJ	Campylobacter jejuni subsp. jejuni serotype O:23/36 (strain 81-176)
+Q2QM59	PCF8	PCF8_ORYSJ	Oryza sativa subsp. japonica
+Q2TBH7	RAB4A	RAB4A_BOVIN	Bos taurus
+Q2VUH8	PEX20	PEX20_PICPA	Komagataella pastoris
+Q32FJ7	ppsR	PSRP_SHIDS	Shigella dysenteriae serotype 1 (strain Sd197)
+Q32KV2	MAEL	MAEL_BOVIN	Bos taurus
+Q3KKK3	pheS	SYFA_CHLTA	Chlamydia trachomatis serovar A (strain ATCC VR-571B / DSM 19440 / HAR-13)
+Q3SYS4	DNAAF1	DAAF1_BOVIN	Bos taurus
+Q3SYS9	KIFBP	KBP_BOVIN	Bos taurus
+Q3SZC2	PSMB9	PSB9_BOVIN	Bos taurus
+Q3U4G0	Cdin1	CDIN1_MOUSE	Mus musculus
+Q3UYV9	Ncbp1	NCBP1_MOUSE	Mus musculus
+Q3ZBH3	CD151	CD151_BOVIN	Bos taurus
+Q42565	ASB1	ASB1_ARATH	Arabidopsis thaliana
+Q42679	SAMDC	DCAM_CATRO	Catharanthus roseus
+Q46372	bphA	BPHA_COMTE	Comamonas testosteroni
+Q47086	cbrC	CBRC_DICD3	Dickeya dadantii (strain 3937)
+Q499E0	Brinp3	BRNP3_MOUSE	Mus musculus
+Q49A88	CCDC14	CCD14_HUMAN	Homo sapiens
+Q4R379	RALB	RALB_MACFA	Macaca fascicularis
+Q4ULJ8	tlcD	TLCD_RICFE	Rickettsia felis (strain ATCC VR-1525 / URRWXCal2)
+Q4V890	Fem1a	FEM1A_RAT	Rattus norvegicus
+Q4WDD4	atrF	ATRF_ASPFU	Aspergillus fumigatus (strain ATCC MYA-4609 / CBS 101355 / FGSC A1100 / Af293)
+Q4WMJ7	gliP	GLIP_ASPFU	Aspergillus fumigatus (strain ATCC MYA-4609 / CBS 101355 / FGSC A1100 / Af293)
+Q4WQ60	dscB	DSCB_ASPFU	Aspergillus fumigatus (strain ATCC MYA-4609 / CBS 101355 / FGSC A1100 / Af293)
+Q503Y4	ovca2	OVCA2_DANRE	Danio rerio
+Q505J6	Slc25a18	GHC2_RAT	Rattus norvegicus
+Q52439	bphA2	BPHA2_PSES1	Pseudomonas sp. (strain KKS102)
+Q54U72	impa1	IMPA1_DICDI	Dictyostelium discoideum
+Q54VI4	gsta3	GSTA3_DICDI	Dictyostelium discoideum
+Q55025	srpA	SRPA_SYNE7	Synechococcus elongatus (strain ATCC 33912 / PCC 7942 / FACHB-805)
+Q55167	proA2	PROA2_SYNY3	Synechocystis sp. (strain ATCC 27184 / PCC 6803 / Kazusa)
+Q553R3	eif4g	IF4G_DICDI	Dictyostelium discoideum
+Q58D91	CARD19	CAR19_BOVIN	Bos taurus
+Q59HJ6	LONP1	LONM_BOVIN	Bos taurus
+Q5AHA0	CHK1	CHK1_CANAL	Candida albicans (strain SC5314 / ATCC MYA-2876)
+Q5BJ56	fxr1	FXR1_XENTR	Xenopus tropicalis
+Q5CZK5	INSL5	INSL5_PANTR	Pan troglodytes
+Q5E9A0	OSER1	OSER1_BOVIN	Bos taurus
+Q5F3A6	YOD1	OTU1_CHICK	Gallus gallus
+Q5FVQ7	Fam174a	F174A_RAT	Rattus norvegicus
+Q5FW12	tiprl	TIPRL_XENTR	Xenopus tropicalis
+Q5I0X7	TTC32	TTC32_HUMAN	Homo sapiens
+Q5NER4	truB	TRUB_FRATT	Francisella tularensis subsp. tularensis (strain SCHU S4 / Schu 4)
+Q5PAS5	obg1	OBG1_ANAMM	Anaplasma marginale (strain St. Maries)
+Q5QJC4	DCLRE1A	DCR1A_CHICK	Gallus gallus
+Q5R458	RFTN2	RFTN2_PONAB	Pongo abelii
+Q5R7K6	EMC1	EMC1_PONAB	Pongo abelii
+Q5R8S2	PSMB5	PSB5_PONAB	Pongo abelii
+Q5R9Q5	ACTA1	ACTS_PONAB	Pongo abelii
+Q5RCK5	ASB7	ASB7_PONAB	Pongo abelii
+Q5RDD2	PRPF38A	PR38A_PONAB	Pongo abelii
+Q5RDZ1	PBLD	PBLD_PONAB	Pongo abelii
+Q5REW9	ANKRD27	ANR27_PONAB	Pongo abelii
+Q5RJ80	caprin2	CAPR2_DANRE	Danio rerio
+Q5U1Y1	Rab34	RAB34_RAT	Rattus norvegicus
+Q5U2N0	Ctps2	PYRG2_RAT	Rattus norvegicus
+Q5U2X5	Tnk2	ACK1_RAT	Rattus norvegicus
+Q5U308	Lrrc8d	LRC8D_RAT	Rattus norvegicus
+Q5VPE5	HOX28	HOX28_ORYSJ	Oryza sativa subsp. japonica
+Q5XG58	elp4	ELP4_XENLA	Xenopus laevis
+Q5XJW2	Gadd45gip1	G45IP_RAT	Rattus norvegicus
+Q60181	rpo2C	RPO2C_METJA	Methanocaldococcus jannaschii (strain ATCC 43067 / DSM 2661 / JAL-1 / JCM 10045 / NBRC 100440)
+Q60564	LMX1B	LMX1B_MESAU	Mesocricetus auratus
+Q60890	Or2b6	OR2B6_MOUSE	Mus musculus
+Q60EJ6	GH3.4	GH34_ORYSJ	Oryza sativa subsp. japonica
+Q60V51	let-767	LE767_CAEBR	Caenorhabditis briggsae
+Q60YT5	dcn-1	DCN1_CAEBR	Caenorhabditis briggsae
+Q61221	Hif1a	HIF1A_MOUSE	Mus musculus
+Q61481	Pde1a	PDE1A_MOUSE	Mus musculus
+Q61810	Ltbp3	LTBP3_MOUSE	Mus musculus
+Q61E63	spt-16	SPT16_CAEBR	Caenorhabditis briggsae
+Q621Z7	mdt-4	MED4_CAEBR	Caenorhabditis briggsae
+Q62EN9	ttcA	TTCA_BURMA	Burkholderia mallei (strain ATCC 23344)
+Q63932	Map2k2	MP2K2_MOUSE	Mus musculus
+Q651Z5	HOX6	HOX6_ORYSJ	Oryza sativa subsp. japonica
+Q68RJ5	IFT81	IFT81_CHLRE	Chlamydomonas reinhardtii
+Q69552	U17/U16	U17_HHV6U	Human herpesvirus 6A (strain Uganda-1102)
+Q69Z61	Pwwp2a	PWP2A_MOUSE	Mus musculus
+Q6AY08	Flacc1	FACC1_RAT	Rattus norvegicus
+Q6AYC4	Capg	CAPG_RAT	Rattus norvegicus
+Q6BIJ5	MRPS9	RT09_DEBHA	Debaryomyces hansenii (strain ATCC 36239 / CBS 767 / BCRC 21394 / JCM 1990 / NBRC 0083 / IGC 2968)
+Q6CMB5	SPC110	SP110_KLULA	Kluyveromyces lactis (strain ATCC 8585 / CBS 2359 / DSM 70799 / NBRC 1267 / NRRL Y-1140 / WM37)
+Q6CW60	ECO1	ECO1_KLULA	Kluyveromyces lactis (strain ATCC 8585 / CBS 2359 / DSM 70799 / NBRC 1267 / NRRL Y-1140 / WM37)
+Q6D989	deoD	DEOD_PECAS	Pectobacterium atrosepticum (strain SCRI 1043 / ATCC BAA-672)
+Q6DFL2	bod1	BOD1_XENLA	Xenopus laevis
+Q6DGJ1	grifin	GRIFN_DANRE	Danio rerio
+Q6F1Z6	deoC1	DEOC1_MESFL	Mesoplasma florum (strain ATCC 33453 / NBRC 100688 / NCTC 11704 / L1)
+Q6FQ15	GNT1	GNT1_CANGA	Candida glabrata (strain ATCC 2001 / BCRC 20586 / JCM 3761 / NBRC 0622 / NRRL Y-65 / CBS 138)
+Q6GR31	abraxas1	ABRX1_XENLA	Xenopus laevis
+Q6J4I0	Ppp1r1b	PPR1B_RAT	Rattus norvegicus
+Q6L5E5	GATA15	GAT15_ORYSJ	Oryza sativa subsp. japonica
+Q6LLG2	atpB1	ATP61_PHOPR	Photobacterium profundum (strain SS9)
+Q6NVG1	Lpcat4	LPCT4_MOUSE	Mus musculus
+Q6NX27	mindy3	MINY3_XENTR	Xenopus tropicalis
+Q6NZI6	orai2	ORAI2_XENLA	Xenopus laevis
+Q6P7D5	Mid1ip1	M1IP1_RAT	Rattus norvegicus
+Q6RUT8	Ccdc154	CC154_MOUSE	Mus musculus
+Q6S9E0	ZFP36	TTP_SHEEP	Ovis aries
+Q6V3W0	thr	THR_DROPS	Drosophila pseudoobscura pseudoobscura
+Q6X2M3	SEMG2	SEMG2_HYLKL	Hylobates klossii
+Q6X7J4	WOX9	WOX9_ARATH	Arabidopsis thaliana
+Q6YFE4	GRX5	GLRX5_LACKL	Lachancea kluyveri
+Q6YNI2	Gpr6	GPR6_MOUSE	Mus musculus
+Q6ZNC8	MBOAT1	MBOA1_HUMAN	Homo sapiens
+Q70LC4	ORF146	Y146_AFV1Y	Acidianus filamentous virus 1 (isolate United States/Yellowstone)
+Q71S46	Atp5mc3	AT5G3_RAT	Rattus norvegicus
+Q753D4	RSE1	RSE1_EREGS	Eremothecium gossypii (strain ATCC 10895 / CBS 109.51 / FGSC 9923 / NRRL Y-1056)
+Q75D58	SRB4	MED17_EREGS	Eremothecium gossypii (strain ATCC 10895 / CBS 109.51 / FGSC 9923 / NRRL Y-1056)
+Q75KU4	CBL4	CNBL4_ORYSJ	Oryza sativa subsp. japonica
+Q766C2	nep2	NEP2_NEPGR	Nepenthes gracilis
+Q7D513	egtB	EGTB_MYCTO	Mycobacterium tuberculosis (strain CDC 1551 / Oshkosh)
+Q7M715	Tas2r117	TR117_MOUSE	Mus musculus
+Q7MGA2	rsgA2	RSGA2_VIBVY	Vibrio vulnificus (strain YJ016)
+Q7MYP0	corA	CORA_PHOLL	Photorhabdus laumondii subsp. laumondii (strain DSM 15139 / CIP 105565 / TT01)
+Q7PC84	ABCG39	AB39G_ARATH	Arabidopsis thaliana
+Q7T045	LC1	SLLC1_MACLB	Macrovipera lebetinus
+Q7Z3I7	ZNF572	ZN572_HUMAN	Homo sapiens
+Q80W92	Vac14	VAC14_RAT	Rattus norvegicus
+Q80WG7	Trim36	TRI36_MOUSE	Mus musculus
+Q82CA6	clpP3	CLPP3_STRAW	Streptomyces avermitilis (strain ATCC 31267 / DSM 46492 / JCM 5070 / NBRC 14893 / NCIMB 12804 / NRRL 8165 / MA-4680)
+Q845T3	vatD	VATD_VIBVL	Vibrio vulnificus
+Q851F9	EGY3	EGY3_ORYSJ	Oryza sativa subsp. japonica
+Q86567	DNA-R	MREP_BBTVA	Banana bunchy top virus (isolate Autralia)
+Q86IA3	pdi1	PDI1_DICDI	Dictyostelium discoideum
+Q86VQ6	TXNRD3	TRXR3_HUMAN	Homo sapiens
+Q874L4	TPN1	TPN1_YEASX	Saccharomyces cerevisiae
+Q89FH0	tarD	TARD_BRADU	Bradyrhizobium diazoefficiens (strain JCM 10833 / BCRC 13528 / IAM 13628 / NBRC 14792 / USDA 110)
+Q8BGW2	Wbp1l	WBP1L_MOUSE	Mus musculus
+Q8BJT9	Edem2	EDEM2_MOUSE	Mus musculus
+Q8BU31	Rap2c	RAP2C_MOUSE	Mus musculus
+Q8BXR1	Slc7a14	S7A14_MOUSE	Mus musculus
+Q8BZB3	Tmem266	TM266_MOUSE	Mus musculus
+Q8BZI0	Afap1l1	AF1L1_MOUSE	Mus musculus
+Q8C0M8	Dnai1	DNAI1_MOUSE	Mus musculus
+Q8C6G8	Wdr26	WDR26_MOUSE	Mus musculus
+Q8IUK5	PLXDC1	PLDX1_HUMAN	Homo sapiens
+Q8IWB6	TEX14	TEX14_HUMAN	Homo sapiens
+Q8IWU2	LMTK2	LMTK2_HUMAN	Homo sapiens
+Q8K3F3	Ppp1r14b	PP14B_RAT	Rattus norvegicus
+Q8K5B1	Il31ra	IL31R_MOUSE	Mus musculus
+Q8LBC0	CYCT1-3	CCT13_ARATH	Arabidopsis thaliana
+Q8N141	ZFP82	ZFP82_HUMAN	Homo sapiens
+Q8N1E2	LYG1	LYG1_HUMAN	Homo sapiens
+Q8N4N8	KIF2B	KIF2B_HUMAN	Homo sapiens
+Q8N5H7	SH2D3C	SH2D3_HUMAN	Homo sapiens
+Q8N5M4	TTC9C	TTC9C_HUMAN	Homo sapiens
+Q8N6M9	ZFAND2A	ZFN2A_HUMAN	Homo sapiens
+Q8NCE2	MTMR14	MTMRE_HUMAN	Homo sapiens
+Q8NEJ0	DUSP18	DUS18_HUMAN	Homo sapiens
+Q8NQJ3	odhI	ODHI_CORGL	Corynebacterium glutamicum (strain ATCC 13032 / DSM 20300 / JCM 1318 / BCRC 11384 / CCUG 27702 / LMG 3730 / NBRC 12168 / NCIMB 10025 / NRRL B-2784 / 534)
+Q8PQA7	opgB	OPGB_XANAC	Xanthomonas axonopodis pv. citri (strain 306)
+Q8R0Z2	Enox2	ENOX2_MOUSE	Mus musculus
+Q8R2E9	Ero1b	ERO1B_MOUSE	Mus musculus
+Q8R2H4	Klhl12	KLH12_RAT	Rattus norvegicus
+Q8R2Y2	Mcam	MUC18_MOUSE	Mus musculus
+Q8R2Y8	Ptrh2	PTH2_MOUSE	Mus musculus
+Q8R3F5	Mcat	FABD_MOUSE	Mus musculus
+Q8RKJ0	tarJ	TARJ_BACSH	Bacillus spizizenii (strain ATCC 23059 / NRRL B-14472 / W23)
+Q8TAC2	JOSD2	JOS2_HUMAN	Homo sapiens
+Q8TAV3	CYP2W1	CP2W1_HUMAN	Homo sapiens
+Q8TD06	AGR3	AGR3_HUMAN	Homo sapiens
+Q8TF30	WHAMM	WHAMM_HUMAN	Homo sapiens
+Q8TG12	ckb-1	CSK2B_NEUCR	Neurospora crassa (strain ATCC 24698 / 74-OR23-1A / CBS 708.71 / DSM 1257 / FGSC 987)
+Q8TS46	nadA1	NADA1_METAC	Methanosarcina acetivorans (strain ATCC 35395 / DSM 2834 / JCM 12185 / C2A)
+Q8VC10	Osgin1	OSGI1_MOUSE	Mus musculus
+Q8VDU5	Snrk	SNRK_MOUSE	Mus musculus
+Q8VHE6	Dnah5	DYH5_MOUSE	Mus musculus
+Q8WXX5	DNAJC9	DNJC9_HUMAN	Homo sapiens
+Q8XBK5	ttdB	TTDB_ECO57	Escherichia coli O157:H7
+Q90850	HIC1	HIC1_CHICK	Gallus gallus
+Q90932	NFIX	NFIX_CHICK	Gallus gallus
+Q90XH3	lmo2	RBTN2_XENLA	Xenopus laevis
+Q92901	RPL3L	RL3L_HUMAN	Homo sapiens
+Q94B60	CLPP4	CLPP4_ARATH	Arabidopsis thaliana
+Q95LA0	FATE1	FATE1_BOVIN	Bos taurus
+Q96A99	PTX4	PTX4_HUMAN	Homo sapiens
+Q96F44	TRIM11	TRI11_HUMAN	Homo sapiens
+Q96GY3	LIN37	LIN37_HUMAN	Homo sapiens
+Q96LW1	ZNF354B	Z354B_HUMAN	Homo sapiens
+Q96LW4	PRIMPOL	PRIPO_HUMAN	Homo sapiens
+Q96MX0	CMTM3	CKLF3_HUMAN	Homo sapiens
+Q97Y92	cas5a	CAS5A_SACS2	Saccharolobus solfataricus (strain ATCC 35092 / DSM 1617 / JCM 11322 / P2)
+Q99612	KLF6	KLF6_HUMAN	Homo sapiens
+Q99JG7	Tnip2	TNIP2_MOUSE	Mus musculus
+Q99MH6	Nkd1	NKD1_MOUSE	Mus musculus
+Q99NE5	Rims1	RIMS1_MOUSE	Mus musculus
+Q9BDW8	GDF7	GDF7_CHLAE	Chlorocebus aethiops
+Q9BY07	SLC4A5	S4A5_HUMAN	Homo sapiens
+Q9CR33	Mansc1	MANS1_MOUSE	Mus musculus
+Q9CZ13	Uqcrc1	QCR1_MOUSE	Mus musculus
+Q9D4D4	Tktl2	TKTL2_MOUSE	Mus musculus
+Q9D8P7	Gtf3c6	TF3C6_MOUSE	Mus musculus
+Q9DAX9	Appbp2	APBP2_MOUSE	Mus musculus
+Q9ERS8	Sebox	SEBOX_RAT	Rattus norvegicus
+Q9FIH8	SPP	SPP_ARATH	Arabidopsis thaliana
+Q9FJ57	TRN1	TRN1_ARATH	Arabidopsis thaliana
+Q9FN52	MAM3	MAM3_ARATH	Arabidopsis thaliana
+Q9FPP7	FAC2A	FAC2B_CALOF	Calendula officinalis
+Q9GSU4	Hsp70Ba	HSP72_DROSI	Drosophila simulans
+Q9HBE1	PATZ1	PATZ1_HUMAN	Homo sapiens
+Q9J540	RPO35	RP35_FOWPN	Fowlpox virus (strain NVSL)
+Q9JHI2	Adat1	ADAT1_MOUSE	Mus musculus
+Q9JIL2	Ccl28	CCL28_MOUSE	Mus musculus
+Q9LZF5	LLP	LECT6_ARATH	Arabidopsis thaliana
+Q9MUP3	ycf81	YCF81_MESVI	Mesostigma viride
+Q9NDE7	PIN	INS_APLCA	Aplysia californica
+Q9NFL5	HCF	HCYF_APHSP	Aphonopelma sp.
+Q9NPG3	UBN1	UBN1_HUMAN	Homo sapiens
+Q9NVD7	PARVA	PARVA_HUMAN	Homo sapiens
+Q9NVH6	TMLHE	TMLH_HUMAN	Homo sapiens
+Q9NXG6	P4HTM	P4HTM_HUMAN	Homo sapiens
+Q9P031	CCDC59	TAP26_HUMAN	Homo sapiens
+Q9P2B4	CTTNBP2NL	CT2NL_HUMAN	Homo sapiens
+Q9P7J1	swt1	SWT1_SCHPO	Schizosaccharomyces pombe (strain 972 / ATCC 24843)
+Q9P8Q7	ICL1	ACEA_CANAX	Candida albicans
+Q9R0X4	Acot9	ACOT9_MOUSE	Mus musculus
+Q9R229	Bmp10	BMP10_MOUSE	Mus musculus
+Q9SJL8	METK3	METK3_ARATH	Arabidopsis thaliana
+Q9SR64	ENT2	ENT2_ARATH	Arabidopsis thaliana
+Q9TSX5	LDHC	LDHC_PIG	Sus scrofa
+Q9U1I1	esn	ESN_DROME	Drosophila melanogaster
+Q9UIR0	BTNL2	BTNL2_HUMAN	Homo sapiens
+Q9ULH7	MRTFB	MRTFB_HUMAN	Homo sapiens
+Q9UN76	SLC6A14	S6A14_HUMAN	Homo sapiens
+Q9UQB9	AURKC	AURKC_HUMAN	Homo sapiens
+Q9UVF8	THI2	THI4_UROFA	Uromyces fabae
+Q9VHB9	trmt44	TRM44_DROME	Drosophila melanogaster
+Q9W303	Idgf4	IDGF4_DROME	Drosophila melanogaster
+Q9W3U1	Setd3	SETD3_DROME	Drosophila melanogaster
+Q9W6V6	TENM1	TEN1_CHICK	Gallus gallus
+Q9WU06	Avil	AVIL_RAT	Rattus norvegicus
+Q9WZ24	leuC2	LEUC2_THEMA	Thermotoga maritima (strain ATCC 43589 / DSM 3109 / JCM 10099 / NBRC 100826 / MSB8)
+Q9Y3C6	PPIL1	PPIL1_HUMAN	Homo sapiens
+Q9Y6Q1	CAPN6	CAN6_HUMAN	Homo sapiens
+Q9YDC5	ribC	RISC_AERPE	Aeropyrum pernix (strain ATCC 700893 / DSM 11879 / JCM 9820 / NBRC 100138 / K1)
+Q9YMS9	LEF-11	LEF11_NPVLD	Lymantria dispar multicapsid nuclear polyhedrosis virus
+Q9Z129	Recql	RECQ1_MOUSE	Mus musculus
+Q9Z3Q5	rhtA	RHTA_RHIME	Rhizobium meliloti (strain 1021)
+Q9ZGR8	yubM	YUBM_ECO57	Escherichia coli O157:H7
+Q9ZN78	arpA	AFRP_STRGR	Streptomyces griseus
+Q9ZR02	CML6	CML6_ARATH	Arabidopsis thaliana
+S0DPL8	apf2	APF2_GIBF5	Gibberella fujikuroi (strain CBS 195.34 / IMI 58289 / NRRL A-6831)
+S0DW25	FUB11	FUB11_GIBF5	Gibberella fujikuroi (strain CBS 195.34 / IMI 58289 / NRRL A-6831)
+S4X0Q8	adgra3	AGRA3_DANRE	Danio rerio
+W0W999	flA1	FLA_STRSQ	Streptomyces sp.
