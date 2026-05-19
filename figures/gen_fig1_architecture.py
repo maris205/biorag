@@ -26,10 +26,12 @@ def arrow(ax, start, end, color=COLORS["dark"], rad=0.0, lw=1.2):
         start,
         end,
         arrowstyle="-|>",
-        mutation_scale=10,
+        mutation_scale=8,
         linewidth=lw,
         color=color,
         connectionstyle=f"arc3,rad={rad}",
+        shrinkA=2,
+        shrinkB=3,
     )
     ax.add_patch(arr)
 
@@ -52,15 +54,15 @@ def main():
     box(ax, (0.81, 0.47), (0.15, 0.18), "DRAG graph\npaths + citations", "#F0F7EC", COLORS["green"])
     box(ax, (0.81, 0.18), (0.15, 0.14), "auditable\nagent answer", "#F7FAFC")
 
-    arrow(ax, (0.20, 0.50), (0.28, 0.775))
-    arrow(ax, (0.20, 0.50), (0.28, 0.50))
-    arrow(ax, (0.20, 0.50), (0.28, 0.215))
-    arrow(ax, (0.49, 0.775), (0.58, 0.70), COLORS["teal"])
-    arrow(ax, (0.49, 0.50), (0.58, 0.40), COLORS["orange"])
-    arrow(ax, (0.49, 0.215), (0.58, 0.40), COLORS["purple"], rad=0.08)
-    arrow(ax, (0.76, 0.70), (0.81, 0.58), COLORS["teal"])
-    arrow(ax, (0.76, 0.40), (0.81, 0.54), COLORS["orange"])
-    arrow(ax, (0.885, 0.47), (0.885, 0.32), COLORS["green"])
+    arrow(ax, (0.207, 0.535), (0.265, 0.76))
+    arrow(ax, (0.207, 0.50), (0.265, 0.50))
+    arrow(ax, (0.207, 0.465), (0.265, 0.23))
+    arrow(ax, (0.505, 0.775), (0.568, 0.705), COLORS["teal"])
+    arrow(ax, (0.505, 0.50), (0.568, 0.405), COLORS["orange"])
+    arrow(ax, (0.505, 0.215), (0.568, 0.385), COLORS["purple"], rad=0.08)
+    arrow(ax, (0.770, 0.70), (0.796, 0.60), COLORS["teal"])
+    arrow(ax, (0.770, 0.40), (0.796, 0.53), COLORS["orange"])
+    arrow(ax, (0.885, 0.455), (0.885, 0.335), COLORS["green"])
 
     ax.text(0.355, 0.91, "unified candidate layer", ha="center", fontsize=8, color=COLORS["teal"])
     ax.text(0.67, 0.86, "fast response", ha="center", fontsize=8, color=COLORS["teal"])
