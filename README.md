@@ -2,39 +2,70 @@
 
 Repository: <https://github.com/maris205/biorag>
 
-`dnarag` is the initialized MVP for BioRAG-DRAG: an Open-Rosalind Local Bio-KB
-with hybrid biological retrieval, BLAST verification, vector candidate search,
-and graph-based evidence packaging.
+`dnarag` is a local-first biomedical RAG prototype for unified retrieval over
+text, DNA/cDNA, protein sequences, mixed biological records, and graph evidence.
+It combines vector candidate retrieval, BLAST verification, and DRAG
+evidence-graph packaging for biomedical agents.
 
-It combines the two local reference projects already downloaded in this workspace:
-
-- `open-rosalind/`: tool-first biomedical agent, evidence traces, bounded workflows.
-- `omnigene4/`: OmniGene-4 CPT representation model and router-analysis work. The main configured embedding model is the full merged CPT checkpoint with biological sequence vocabulary, not the SFT/chat checkpoint.
-
-The MVP target is a single logical local life-science knowledge base with multiple retrieval views:
-
-```text
-SQL / FTS + BLAST + OmniGene embeddings + DRAG graph expansion
-```
+<p align="center">
+  <img src="figures/fig1_architecture.png" alt="BioRAG-DRAG architecture" width="92%">
+</p>
 
 The paper positioning is biological multimodal RAG, not replacing BLAST. BLAST
-remains the strong biological sequence-search baseline; the OmniGene vector and
-DRAG layers provide a unified evidence interface for text, DNA/cDNA, protein,
-mixed English-sequence records, and later structure/image retrieval. See
-`docs/PAPER_POSITIONING.md`.
+remains the alignment-grounded verification route; vector search provides a
+unified candidate/context layer; DRAG packages retrieval results as typed,
+inspectable evidence graphs.
 
-## Current Bootstrap
+## Highlights
 
-This repository adds:
+- **Unified evidence interface:** SQL/FTS, Chroma vector retrieval, BLAST, and
+  graph expansion expose one local retrieval API.
+- **Model-agnostic embedding layer:** OmniGene CPT can serve mixed
+  biological-language inputs; public encoders such as ProtT5 and ESM-2 can serve
+  protein-only partitions.
+- **Conservative sequence workflow:** vector search supplies candidate pools,
+  while BLAST remains the verified route.
+- **DRAG evidence graphs:** sequence hits are returned as typed neighborhoods
+  rather than isolated ranked records.
 
-- a Python package and CLI: `dnarag`
-- config for the Standard KB bundle under `/autodl-fs/data/open-rosalind-kb/standard`
-- wrappers around the existing Open-Rosalind Standard SQLite FTS index
-- a first-pass DRAG graph builder over genes, GO terms, pathways, variants, and xrefs
-- optional vector-index scaffolding for OmniGene CPT backends, including the local GGUF build
-- a hybrid search interface that returns evidence and retrieval traces
-- a DRAG answer scaffold that packages citations, graph paths, modality views, and a prompt-ready evidence block
-- smoke tests for local behavior that do not require downloading the OmniGene model
+<p align="center">
+  <img src="figures/fig6_drag_knowledge_graph_showcase.png" alt="DRAG knowledge graph showcase" width="92%">
+</p>
+
+## Paper Snapshot
+
+<p align="center">
+  <img src="figures/fig3_retrieval_quality.png" alt="Retrieval quality results" width="47%">
+  <img src="figures/fig4_latency.png" alt="Latency results" width="47%">
+</p>
+
+Controlled Swiss-Prot parent-fragment scale frontier:
+
+| Scale | BLAST Bio@10 / MRR | Vector Bio@10 / MRR | Vector Recall@200 | Candidate-BLAST Bio@10 / MRR |
+| --- | ---: | ---: | ---: | ---: |
+| 20k | 0.8560 / 0.8289 | 0.7780 / 0.7158 | 0.8460 | pending |
+| 100k | 0.8320 / 0.7960 | 0.7260 / 0.6268 | 0.8000 | 0.7580 / 0.7245 |
+| 300k | 0.8140 / 0.7613 | 0.6760 / 0.5788 | 0.7740 | 0.7320 / 0.6835 |
+
+Candidate-BLAST improves dense retrieval ranking at matched scale, but the
+current Chroma POC does not claim a speed advantage over full BLAST. The
+candidate-BLAST-only stage is small; optimized vector serving is the next
+systems step.
+
+<p align="center">
+  <img src="figures/fig5_drag_biology.png" alt="Exploratory DRAG biology analysis" width="70%">
+</p>
+
+## Repository Contents
+
+- `dnarag/`: Python package and CLI.
+- `scripts/`: dataset construction, vector builds, BLAST reranking, graph
+  analysis, latency, and paper-summary scripts.
+- `benchmarks/`: JSONL benchmark task definitions.
+- `configs/`: local Standard KB, held-out subset, and model/backend configs.
+- `docs/REPRODUCIBILITY.md`: paper-scale command list and artifact policy.
+- `paper/main.tex` and `paper/main.pdf`: current manuscript draft.
+- `reports/*.md`: compact experiment and research summaries.
 
 ## Quick Start
 
