@@ -1,5 +1,11 @@
 # Sequence-to-Literature DAG and Agent Evidence Evaluation
 
+> Scope note (2026-08-30): this report preserves the earlier ProtT5-only
+> selector and Qwen2.5 execution result. The manuscript's current fixed-route
+> comparison uses fused ProtT5+BLAST packs and Qwen3.5; see
+> `reports/agent_application_ablation_qwen35.md`. The earlier selector gain must
+> not be presented as the fused-route result.
+
 ## Scope
 
 This experiment evaluates the final BioRAG application path:

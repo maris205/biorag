@@ -82,6 +82,7 @@ def test_seq_lit_dag_builder_writes_core_path(tmp_path: Path):
     assert result.node_count >= 5
     assert result.edge_count >= 5
     with sqlite3.connect(result.graph_db) as conn:
+        conn.row_factory = sqlite3.Row
         path_count = conn.execute(
             """
             SELECT COUNT(*)
@@ -91,7 +92,22 @@ def test_seq_lit_dag_builder_writes_core_path(tmp_path: Path):
               AND target_entity_id = 'paper:PMID:12345'
             """
         ).fetchone()[0]
+        provenance = conn.execute(
+            """
+            SELECT source_record, evidence_level, retrieval_score,
+                   verification_method, database_version
+            FROM edges
+            WHERE source_entity_id = 'protein:P38398'
+              AND relation_type = 'annotated_with_go'
+            """
+        ).fetchone()
     assert path_count == 1
+    assert provenance is not None
+    assert provenance["source_record"].startswith("evidence:P38398")
+    assert provenance["evidence_level"] == "curated_experimental_annotation"
+    assert provenance["retrieval_score"] is None
+    assert provenance["verification_method"] == "GOA:IDA"
+    assert provenance["database_version"] == "GOA@record-date-20260101"
 
 
 def test_pubmed_jsonl_cache_loader(tmp_path: Path):

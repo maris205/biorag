@@ -16,7 +16,14 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoModelForMultimodalLM,
+    AutoProcessor,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -33,7 +40,7 @@ def main() -> None:
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
     load_started = time.perf_counter()
-    model, tokenizer = load_model(
+    model, frontend, model_interface = load_model(
         args.model,
         quantization=args.quantization,
         dtype=args.dtype,
@@ -50,7 +57,13 @@ def main() -> None:
             continue
         for qa_type in ("function", "literature", "mechanism"):
             prompt = build_prompt(query, pack, qa_type=qa_type, evidence_mode=args.evidence_mode)
-            answer, usage = generate(model, tokenizer, prompt, max_new_tokens=args.max_new_tokens)
+            answer, usage = generate(
+                model,
+                frontend,
+                prompt,
+                max_new_tokens=args.max_new_tokens,
+                model_interface=model_interface,
+            )
             outputs.append(
                 {
                     "query_id": pack["query_id"],
@@ -77,6 +90,7 @@ def main() -> None:
             "This artifact records model outputs and does not treat string-matched GO/PMID mentions as proof of correctness."
         ),
         "model": args.model,
+        "model_interface": model_interface,
         "query_count": len({row["query_id"] for row in outputs}),
         "answer_count": len(outputs),
         "max_new_tokens": args.max_new_tokens,
@@ -165,6 +179,10 @@ def build_prompt(
             )
             if support is not None:
                 evidence.append(f"[P{rank}] PMID={pmid} supported_by_accession={support['accession']}")
+    if qa_type != "mechanism" and not has_supported_evidence(pack, qa_type=qa_type, evidence_mode=evidence_mode):
+        constraint = "No supported identifier is present in Evidence. Explicitly abstain and do not invent one."
+        answer_schema = "ANSWER: INSUFFICIENT_EVIDENCE"
+        citation_schema = "CITATIONS: NONE"
     return "\n".join(
         [
             "Evidence:",
@@ -182,6 +200,26 @@ def build_prompt(
     )
 
 
+def has_supported_evidence(pack: dict[str, Any], *, qa_type: str, evidence_mode: str) -> bool:
+    selector_config = dict((pack.get("selector_config") or {}).get(qa_type) or {})
+    candidate_k = int(selector_config.get("candidate_k", 10))
+    candidates = list(pack.get("candidates", []))[:candidate_k]
+    if qa_type == "function":
+        if evidence_mode == "graph_idf":
+            return bool(pack.get("go_claims"))
+        return any(item.get("go_ids") for item in candidates)
+    if qa_type == "literature":
+        if evidence_mode == "graph_idf":
+            return bool(pack.get("paper_claims"))
+        supported = {
+            str(pmid)
+            for item in candidates
+            for pmid in item.get("paper_ids", [])
+        }
+        return any(str(pmid) in supported for pmid in pack.get("papers", []))
+    return False
+
+
 def load_model(
     model_path: str,
     *,
@@ -196,13 +234,26 @@ def load_model(
         "float16": torch.float16,
         "float32": torch.float32,
     }
-    tokenizer = AutoTokenizer.from_pretrained(
+    config = AutoConfig.from_pretrained(
         model_path,
         trust_remote_code=True,
         local_files_only=local_files_only,
     )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+    model_interface = model_interface_for_config(config)
+    if model_interface == "multimodal_processor":
+        frontend = AutoProcessor.from_pretrained(
+            model_path,
+            trust_remote_code=True,
+            local_files_only=local_files_only,
+        )
+    else:
+        frontend = AutoTokenizer.from_pretrained(
+            model_path,
+            trust_remote_code=True,
+            local_files_only=local_files_only,
+        )
+        if frontend.pad_token is None:
+            frontend.pad_token = frontend.eos_token
     model_kwargs: dict[str, Any] = {
         "trust_remote_code": True,
         "local_files_only": local_files_only,
@@ -218,12 +269,30 @@ def load_model(
         )
     if experts_implementation:
         model_kwargs["experts_implementation"] = experts_implementation
-    model = AutoModelForCausalLM.from_pretrained(model_path, **model_kwargs)
+    model_loader = AutoModelForMultimodalLM if model_interface == "multimodal_processor" else AutoModelForCausalLM
+    model = model_loader.from_pretrained(model_path, **model_kwargs)
     model.eval()
-    return model, tokenizer
+    return model, frontend, model_interface
 
 
-def generate(model: Any, tokenizer: Any, prompt: str, *, max_new_tokens: int) -> tuple[str, dict[str, Any]]:
+def model_interface_for_config(config: Any) -> str:
+    model_type = str(getattr(config, "model_type", ""))
+    architectures = {str(item) for item in (getattr(config, "architectures", None) or [])}
+    if model_type in {"qwen3_5", "qwen3_5_moe"} or any(
+        name.endswith("ForConditionalGeneration") for name in architectures
+    ):
+        return "multimodal_processor"
+    return "causal_tokenizer"
+
+
+def generate(
+    model: Any,
+    frontend: Any,
+    prompt: str,
+    *,
+    max_new_tokens: int,
+    model_interface: str = "causal_tokenizer",
+) -> tuple[str, dict[str, Any]]:
     messages = [
         {
             "role": "system",
@@ -234,13 +303,19 @@ def generate(model: Any, tokenizer: Any, prompt: str, *, max_new_tokens: int) ->
         },
         {"role": "user", "content": prompt},
     ]
-    rendered = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    inputs = tokenizer(rendered, return_tensors="pt", truncation=True, max_length=8192, add_special_tokens=False)
-    inputs = {key: value.to(model.device) for key, value in inputs.items()}
+    tokenizer = getattr(frontend, "tokenizer", frontend)
+    inputs = prepare_chat_inputs(
+        frontend,
+        messages,
+        model_interface=model_interface,
+        device=model.device,
+    )
     stop_ids = [tokenizer.eos_token_id]
-    eot_id = tokenizer.convert_tokens_to_ids("<turn|>") if "<turn|>" in tokenizer.get_vocab() else None
-    if isinstance(eot_id, int) and eot_id >= 0 and eot_id not in stop_ids:
-        stop_ids.append(eot_id)
+    vocabulary = tokenizer.get_vocab()
+    for token in ("<turn|>", "<|im_end|>", "<|end|>"):
+        eot_id = tokenizer.convert_tokens_to_ids(token) if token in vocabulary else None
+        if isinstance(eot_id, int) and eot_id >= 0 and eot_id not in stop_ids:
+            stop_ids.append(eot_id)
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     started = time.perf_counter()
@@ -249,18 +324,57 @@ def generate(model: Any, tokenizer: Any, prompt: str, *, max_new_tokens: int) ->
             **inputs,
             max_new_tokens=max_new_tokens,
             do_sample=False,
-            pad_token_id=tokenizer.pad_token_id,
+            pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
             eos_token_id=stop_ids,
         )
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     generation_s = time.perf_counter() - started
     generated = output[0][inputs["input_ids"].shape[1] :]
-    answer = tokenizer.decode(generated, skip_special_tokens=True).strip()
+    answer = frontend.decode(generated, skip_special_tokens=True).strip()
     return answer, {
         "input_tokens": int(inputs["input_ids"].shape[1]),
         "output_tokens": int(generated.shape[0]),
         "generation_s": round(generation_s, 6),
+    }
+
+
+def prepare_chat_inputs(
+    frontend: Any,
+    messages: list[dict[str, str]],
+    *,
+    model_interface: str,
+    device: Any,
+) -> dict[str, torch.Tensor]:
+    if model_interface == "multimodal_processor":
+        processor_messages = [
+            {
+                "role": str(message["role"]),
+                "content": [{"type": "text", "text": str(message["content"])}],
+            }
+            for message in messages
+        ]
+        batch = frontend.apply_chat_template(
+            processor_messages,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_dict=True,
+            return_tensors="pt",
+            enable_thinking=False,
+        )
+    else:
+        rendered = frontend.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        batch = frontend(
+            rendered,
+            return_tensors="pt",
+            truncation=True,
+            max_length=8192,
+            add_special_tokens=False,
+        )
+    return {
+        key: value.to(device)
+        for key, value in batch.items()
+        if value is not None and hasattr(value, "to")
     }
 
 

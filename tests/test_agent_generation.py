@@ -1,4 +1,14 @@
-from scripts.generate_agent_qa import build_prompt, extract_pmids
+from types import SimpleNamespace
+
+import torch
+
+from scripts.generate_agent_qa import (
+    build_prompt,
+    extract_pmids,
+    has_supported_evidence,
+    model_interface_for_config,
+    prepare_chat_inputs,
+)
 from scripts.score_generated_agent_qa import score_output
 
 
@@ -95,3 +105,63 @@ def test_mechanism_abstention_is_strictly_formatted():
     assert score["abstention_correct"] is True
     assert score["citation_entailment"] == 1.0
     assert score["format_compliance"] is True
+
+
+def test_qwen35_uses_multimodal_processor_with_thinking_disabled():
+    class FakeProcessor:
+        def __init__(self):
+            self.kwargs = None
+
+        def apply_chat_template(self, messages, **kwargs):
+            assert messages[0]["content"] == [{"type": "text", "text": "test"}]
+            self.kwargs = kwargs
+            return {"input_ids": torch.tensor([[1, 2, 3]]), "pixel_values": None}
+
+    processor = FakeProcessor()
+    config = SimpleNamespace(model_type="qwen3_5", architectures=["Qwen3_5ForConditionalGeneration"])
+
+    interface = model_interface_for_config(config)
+    inputs = prepare_chat_inputs(
+        processor,
+        [{"role": "user", "content": "test"}],
+        model_interface=interface,
+        device=torch.device("cpu"),
+    )
+
+    assert interface == "multimodal_processor"
+    assert processor.kwargs["enable_thinking"] is False
+    assert processor.kwargs["tokenize"] is True
+    assert "pixel_values" not in inputs
+
+
+def test_qwen25_keeps_causal_tokenizer_interface():
+    config = SimpleNamespace(model_type="qwen2", architectures=["Qwen2ForCausalLM"])
+
+    assert model_interface_for_config(config) == "causal_tokenizer"
+
+
+def test_empty_pack_requires_evidence_aware_abstention():
+    pack = {"query_id": "q1", "candidates": [], "papers": [], "go_claims": [], "paper_claims": []}
+
+    prompt = build_prompt({"id": "q1"}, pack, qa_type="function", evidence_mode="graph_idf")
+
+    assert has_supported_evidence(pack, qa_type="function", evidence_mode="graph_idf") is False
+    assert "ANSWER: INSUFFICIENT_EVIDENCE" in prompt
+    assert "CITATIONS: NONE" in prompt
+
+
+def test_empty_pack_abstention_is_scored_for_unsupported_function():
+    pack = {"query_id": "q1", "candidates": [], "papers": [], "go_claims": [], "paper_claims": []}
+    prompt = build_prompt({"id": "q1"}, pack, qa_type="function", evidence_mode="graph_idf")
+    output = {
+        "query_id": "q1",
+        "qa_type": "function",
+        "prompt": prompt,
+        "answer": "ANSWER: INSUFFICIENT_EVIDENCE\nCITATIONS: NONE",
+    }
+
+    score = score_output(output, {"id": "q1", "expected_go_ids": ["GO:0000001"]}, pack)
+
+    assert score["evidence_aware_abstention"] == 1.0
+    assert score["citation_entailment"] == 1.0
+    assert score["pack_hallucination_rate"] == 0.0

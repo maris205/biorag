@@ -336,3 +336,72 @@ format compliance, and mechanism abstention. The full BF16 run peaks at
 14.35 GiB, so a 32 GB GPU is sufficient. Automatic correctness is limited to
 structured GO/PMID identifiers; narrative biomedical claims still require
 expert evaluation.
+
+## R2R Application Bridge and Route Ablation
+
+Export the authoritative SeqLit-DAG projection for an R2R v3 application. Raw
+sequence documents are excluded from generic R2R text embedding by default:
+
+```bash
+python scripts/export_seq_lit_r2r.py \
+  --source data/seq_lit_dag_swissprot_sample \
+  --output outputs/r2r/seq_lit_dag_swissprot_sample
+```
+
+Freeze all locally executable application routes on the same 66 test IDs:
+
+```bash
+python scripts/build_agent_application_ablation.py
+```
+
+Run the Qwen3.5-9B BF16 executor on one route. Qwen3.5 uses a multimodal
+processor even for text-only prompts; the script disables thinking and keeps the
+biological evidence pack unchanged:
+
+```bash
+QWEN35_MODEL=/path/to/Qwen3.5-9B
+CUDA_VISIBLE_DEVICES=0 TRANSFORMERS_OFFLINE=1 \
+python scripts/generate_agent_qa.py \
+  --model "$QWEN35_MODEL" \
+  --packs reports/results/agent_application_ablation/combined_blast_vector_dag.jsonl \
+  --queries data/seq_lit_dag_function_heldout_2k/queries.jsonl \
+  --limit 0 --max-new-tokens 160 --evidence-mode graph_idf \
+  --quantization none --dtype bfloat16 \
+  --output reports/results/agent_application_ablation/qwen35_combined_blast_vector_dag_test66.json
+```
+
+Repeat with the other three frozen pack files and their matching evidence mode,
+score each output with `score_generated_agent_qa.py`, then create the paired
+summary:
+
+```bash
+python scripts/summarize_agent_application_ablation.py
+```
+
+The completed Qwen3.5 ablation peaks at 17.88 GiB on an RTX 4080 32 GB GPU.
+The combined DAG route reaches function/literature F1 `0.094/0.088`, typed
+selection F1 `1.000/1.000`, citation entailment `1.000`, and zero out-of-pack
+identifiers. A same-pack Qwen2.5 run reaches `0.094/0.090`, confirming that the
+evidence-route conclusion is not specific to the newer executor. These are
+structured identifier tasks, not free-form biological QA.
+
+The generic text-only R2R control requires a live, frozen R2R collection. Record
+the server/SDK version, collection UUID, and embedding model label:
+
+```bash
+python scripts/eval_r2r_text_control.py \
+  --base-url http://localhost:7272 \
+  --collection-id <frozen-collection-uuid> \
+  --embedding-label <configured-r2r-embedding> \
+  --top-k 50 \
+  --output reports/results/r2r_text_control.json
+```
+
+The evaluator also emits a normalized Agent pack at
+`reports/results/agent_application_ablation/r2r_text_only.jsonl`. Execute it
+with the same Qwen3.5 command and `--evidence-mode raw`, then score it against
+the same 66 test IDs. This makes the live R2R condition an end-to-end Agent
+route rather than a retrieval-only latency row.
+
+Do not label a local proxy as an R2R result. The full integration contract is in
+`docs/R2R_APPLICATION.md`.

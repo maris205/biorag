@@ -45,17 +45,17 @@ def main():
     ax.set_ylim(0, 1)
     ax.axis("off")
 
-    box(ax, (0.015, 0.42), (0.17, 0.16), "query\ntext / DNA / protein", "#F7FAFC", fontsize=8.0)
+    box(ax, (0.015, 0.42), (0.17, 0.16), "query\ntext / DNA / protein", "#F7FAFC", fontsize=7.4)
 
-    box(ax, (0.28, 0.70), (0.21, 0.15), "OmniGene vector\ncoarse retrieval", "#E8F4F2", COLORS["teal"])
+    box(ax, (0.28, 0.70), (0.21, 0.15), "partition-specific\nvector retrieval", "#E8F4F2", COLORS["teal"])
     box(ax, (0.28, 0.42), (0.21, 0.15), "BLAST verification\nor reranking", "#FFF3E0", COLORS["orange"])
-    box(ax, (0.28, 0.14), (0.21, 0.15), "FTS / SQL / metadata\ntext lookup", "#EEF2FF", COLORS["purple"])
+    box(ax, (0.28, 0.14), (0.21, 0.15), "FTS / SQL / metadata\ntext lookup", "#EEF2FF", COLORS["purple"], fontsize=7.8)
 
     box(ax, (0.58, 0.63), (0.18, 0.14), "instant context\nvector candidates", "#E8F4F2", COLORS["teal"])
     box(ax, (0.58, 0.33), (0.18, 0.14), "verified evidence\nalignment support", "#FFF3E0", COLORS["orange"])
 
     box(ax, (0.835, 0.47), (0.15, 0.18), "DRAG graph\npaths + citations", "#F0F7EC", COLORS["green"])
-    box(ax, (0.835, 0.18), (0.15, 0.14), "auditable\nagent answer", "#F7FAFC")
+    box(ax, (0.835, 0.18), (0.15, 0.14), "R2R Agent\nanswer + trace", "#F7FAFC", fontsize=8.0)
 
     arrow(ax, (0.209, 0.535), (0.260, 0.76))
     arrow(ax, (0.209, 0.50), (0.260, 0.50))

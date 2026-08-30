@@ -16,7 +16,7 @@ from dnarag.config import BioKBConfig
 from dnarag.seq_lit_dag.schema import graph_schema_sql, manifest_schema
 
 
-DATASET_VERSION = "0.1.0"
+DATASET_VERSION = "0.2.0"
 PROTEIN_WINDOW_SIZE = 128
 PROTEIN_WINDOW_STRIDE = 64
 DEFAULT_EVIDENCE_CODES = {
@@ -528,9 +528,44 @@ def write_graph(
                     "pmids": list(ann.pmids),
                 },
             )
-            insert_edge(conn, protein_id, "annotated_with_go", go_node, "GOA", 1.0, {"qualifier": ann.qualifier, "evidence_code": ann.evidence_code})
-            insert_edge(conn, protein_id, "has_evidence", evidence_id, "GOA", 1.0, {"go_id": go_id, "evidence_code": ann.evidence_code})
-            insert_edge(conn, evidence_id, "evidence_for_go", go_node, "GOA", 1.0, {"qualifier": ann.qualifier})
+            provenance = {
+                "accession": accession,
+                "go_id": go_id,
+                "evidence_code": ann.evidence_code,
+                "assigned_by": ann.assigned_by,
+                "date": ann.date,
+                "references": ann.reference,
+            }
+            insert_edge(
+                conn,
+                protein_id,
+                "annotated_with_go",
+                go_node,
+                "GOA",
+                1.0,
+                {**provenance, "qualifier": ann.qualifier},
+                source_record=evidence_id,
+            )
+            insert_edge(
+                conn,
+                protein_id,
+                "has_evidence",
+                evidence_id,
+                "GOA",
+                1.0,
+                provenance,
+                source_record=evidence_id,
+            )
+            insert_edge(
+                conn,
+                evidence_id,
+                "evidence_for_go",
+                go_node,
+                "GOA",
+                1.0,
+                {**provenance, "qualifier": ann.qualifier},
+                source_record=evidence_id,
+            )
             for pmid in ann.pmids:
                 paper = pubmed_records.get(pmid)
                 paper_id = paper_node_id(pmid)
@@ -552,9 +587,36 @@ def write_graph(
                     },
                 )
                 insert_aliases(conn, paper_id, [pmid, f"PMID:{pmid}", paper.doi if paper else ""], "PubMed")
-                insert_edge(conn, evidence_id, "supported_by_paper", paper_id, "GOA", 1.0, {"go_id": go_id, "evidence_code": ann.evidence_code})
-                insert_edge(conn, go_node, "supported_by_paper", paper_id, "GOA", 1.0, {"accession": accession, "evidence_code": ann.evidence_code})
-                insert_edge(conn, protein_id, "supported_by_paper", paper_id, "GOA", 1.0, {"go_id": go_id, "evidence_code": ann.evidence_code})
+                insert_edge(
+                    conn,
+                    evidence_id,
+                    "supported_by_paper",
+                    paper_id,
+                    "GOA",
+                    1.0,
+                    {**provenance, "pmid": pmid},
+                    source_record=evidence_id,
+                )
+                insert_edge(
+                    conn,
+                    go_node,
+                    "supported_by_paper",
+                    paper_id,
+                    "GOA",
+                    1.0,
+                    {**provenance, "pmid": pmid},
+                    source_record=evidence_id,
+                )
+                insert_edge(
+                    conn,
+                    protein_id,
+                    "supported_by_paper",
+                    paper_id,
+                    "GOA",
+                    1.0,
+                    {**provenance, "pmid": pmid},
+                    source_record=evidence_id,
+                )
 
 
 def write_sidecars(output: Path, graph_db: Path) -> dict[str, int]:
@@ -924,22 +986,82 @@ def insert_edge(
     source: str | None,
     confidence: float | None,
     metadata: dict[str, Any] | None,
+    *,
+    source_record: str | None = None,
+    evidence_level: str | None = None,
+    retrieval_score: float | None = None,
+    verification_method: str | None = None,
+    database_version: str | None = None,
 ) -> None:
+    edge_metadata = metadata or {}
+    source_record = source_record or _edge_source_record(source_entity_id, edge_metadata)
+    evidence_level = evidence_level or _edge_evidence_level(source, edge_metadata)
+    verification_method = verification_method or _edge_verification_method(source, edge_metadata)
+    database_version = database_version or _edge_database_version(source, edge_metadata)
     conn.execute(
         """
         INSERT OR IGNORE INTO edges
-        (source_entity_id, relation_type, target_entity_id, source, confidence, metadata_json)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (source_entity_id, relation_type, target_entity_id, source, source_record,
+         evidence_level, confidence, retrieval_score, verification_method,
+         database_version, metadata_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             source_entity_id,
             relation_type,
             target_entity_id,
             source,
+            source_record,
+            evidence_level,
             confidence,
-            json.dumps(metadata or {}, ensure_ascii=False, separators=(",", ":")),
+            retrieval_score,
+            verification_method,
+            database_version,
+            json.dumps(edge_metadata, ensure_ascii=False, separators=(",", ":")),
         ),
     )
+
+
+def _edge_source_record(source_entity_id: str, metadata: dict[str, Any]) -> str:
+    references = str(metadata.get("references") or "").strip()
+    if references:
+        return references
+    return source_entity_id
+
+
+def _edge_evidence_level(source: str | None, metadata: dict[str, Any]) -> str:
+    normalized = (source or "").lower()
+    if "blast" in normalized:
+        return "alignment_verified"
+    if "vector" in normalized or "dense" in normalized:
+        return "retrieved_unverified"
+    if metadata.get("evidence_code"):
+        return "curated_experimental_annotation"
+    if any(token in normalized for token in ("goa", "uniprot", "ontology", "taxonomy", "pubmed")):
+        return "curated_database_assertion"
+    return "derived_dataset_edge"
+
+
+def _edge_verification_method(source: str | None, metadata: dict[str, Any]) -> str:
+    normalized = (source or "").lower()
+    if "blast" in normalized:
+        return "sequence_alignment"
+    if "vector" in normalized or "dense" in normalized:
+        return "dense_similarity_only"
+    evidence_code = str(metadata.get("evidence_code") or "").strip()
+    if evidence_code:
+        return f"GOA:{evidence_code}"
+    if any(token in normalized for token in ("goa", "uniprot", "ontology", "taxonomy", "pubmed")):
+        return "curated_record"
+    return "dataset_construction_rule"
+
+
+def _edge_database_version(source: str | None, metadata: dict[str, Any]) -> str:
+    record_date = str(metadata.get("date") or "").strip()
+    source_name = (source or "local").replace(" ", "_")
+    if record_date:
+        return f"{source_name}@record-date-{record_date}"
+    return f"{source_name}@local-snapshot"
 
 
 def protein_node_id(accession: str) -> str:

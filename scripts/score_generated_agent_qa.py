@@ -87,8 +87,11 @@ def score_output(output: dict[str, Any], query: dict[str, Any], pack: dict[str, 
         retrievable_precision, retrievable_recall, retrievable_f1 = set_f1(predicted_go, expected_go & prompt_go)
         _, _, evidence_selection_f1 = set_f1(predicted_go, set(ordered_prompt_go[:output_k]))
         prompt_gold_recall = len(expected_go & prompt_go) / len(expected_go) if expected_go else 0.0
-        claim_support = fraction_supported(predicted_go, cited_go)
+        claim_support = (
+            1.0 if not predicted_go and is_abstention(answer) else fraction_supported(predicted_go, cited_go)
+        )
         hallucination = fraction_outside(predicted_go, pack_go)
+        evidence_aware_abstention = float(bool(not prompt_go and is_abstention(answer)))
     elif qa_type == "literature":
         precision, recall, f1 = set_f1(predicted_pmids, expected_pmids)
         retrievable_precision, retrievable_recall, retrievable_f1 = set_f1(
@@ -96,8 +99,11 @@ def score_output(output: dict[str, Any], query: dict[str, Any], pack: dict[str, 
         )
         _, _, evidence_selection_f1 = set_f1(predicted_pmids, set(ordered_prompt_pmids[:output_k]))
         prompt_gold_recall = len(expected_pmids & prompt_pmids) / len(expected_pmids) if expected_pmids else 0.0
-        claim_support = fraction_supported(predicted_pmids, cited_pmids)
+        claim_support = (
+            1.0 if not predicted_pmids and is_abstention(answer) else fraction_supported(predicted_pmids, cited_pmids)
+        )
         hallucination = fraction_outside(predicted_pmids, pack_pmids)
+        evidence_aware_abstention = float(bool(not prompt_pmids and is_abstention(answer)))
     else:
         precision = recall = f1 = 0.0
         retrievable_precision = retrievable_recall = retrievable_f1 = 0.0
@@ -106,6 +112,7 @@ def score_output(output: dict[str, Any], query: dict[str, Any], pack: dict[str, 
         claim_support = 1.0 if is_abstention(answer) and not predicted_go and not predicted_pmids else 0.0
         hallucination = fraction_outside(predicted_go, pack_go) + fraction_outside(predicted_pmids, pack_pmids)
         hallucination = min(hallucination, 1.0)
+        evidence_aware_abstention = float(bool(is_abstention(answer)))
     format_ok = bool(re.fullmatch(r"ANSWER:[^\n]*\nCITATIONS:[^\n]*\s*", answer))
     citation_text = citation_region(answer)
     bare_citations = re.findall(r"(?<!\[)\b[EPGL]\d+\b(?!\])", citation_text)
@@ -129,6 +136,7 @@ def score_output(output: dict[str, Any], query: dict[str, Any], pack: dict[str, 
         "citation_entailment": claim_support,
         "pack_hallucination_rate": hallucination,
         "abstention_correct": bool(qa_type == "mechanism" and is_abstention(answer)),
+        "evidence_aware_abstention": evidence_aware_abstention,
         "format_compliance": format_ok,
         "citation_syntax_compliance": citation_syntax_ok,
     }
@@ -173,6 +181,7 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, dict[str, float]]:
         "citation_entailment",
         "pack_hallucination_rate",
         "abstention_correct",
+        "evidence_aware_abstention",
         "format_compliance",
         "citation_syntax_compliance",
     )
@@ -194,8 +203,8 @@ def render_markdown(result: dict[str, Any]) -> str:
         "",
         f"Queries: `{result['query_count']}`; answers: `{result['answer_count']}`.",
         "",
-        "| QA type | End-to-end F1 | Prompt gold recall | Retrievable F1 | Evidence-selection F1 | Citation validity | Citation entailment | Pack hallucination | Correct abstention | Format | Citation syntax |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| QA type | End-to-end F1 | Prompt gold recall | Retrievable F1 | Evidence-selection F1 | Citation validity | Citation entailment | Pack hallucination | Evidence-aware abstention | Correct mechanism abstention | Format | Citation syntax |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for qa_type, row in result["summary"].items():
         lines.append(
@@ -203,7 +212,8 @@ def render_markdown(result: dict[str, Any]) -> str:
             f"{row['retrievable_answer_f1']:.3f} | {row['evidence_selection_f1']:.3f} | "
             f"{row['citation_validity']:.3f} | "
             f"{row['citation_entailment']:.3f} | {row['pack_hallucination_rate']:.3f} | "
-            f"{row['abstention_correct']:.3f} | {row['format_compliance']:.3f} | "
+            f"{row['evidence_aware_abstention']:.3f} | {row['abstention_correct']:.3f} | "
+            f"{row['format_compliance']:.3f} | "
             f"{row['citation_syntax_compliance']:.3f} |"
         )
     lines.extend(["", "Only structured identifier claims are automatically judged; narrative biomedical correctness remains outside this pilot.", ""])

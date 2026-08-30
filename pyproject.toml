@@ -23,6 +23,9 @@ gguf = [
 chroma = [
     "chromadb>=1.5",
 ]
+r2r = [
+    "r2r>=3.6,<4",
+]
 test = [
     "pytest>=8.0",
 ]

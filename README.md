@@ -184,14 +184,39 @@ substring overlap, but family-cluster holdout remains required before making a
 strong biological generalization claim.
 
 The final application evaluation uses 33 development and 66 frozen test
-queries. Graph-IDF improves budget-matched function/literature F1 from
-`0.071/0.085` to `0.100/0.100`. Qwen2.5-7B-Instruct then executes all 198
-structured test answers with GO/PMID evidence-selection F1 `0.985/1.000`, typed
-citation entailment `1.000`, no identifier outside the supplied pack, and
-correct abstention for every mechanism question. This is a structured evidence
-execution result, not a free-form biomedical reasoning claim. See
-[`reports/agent_sequence_literature_application_eval.md`](reports/agent_sequence_literature_application_eval.md)
-for the protocol, bootstrap intervals, retrieval ceiling, and claim boundary.
+queries. With Qwen3.5-9B fixed across routes, function/literature F1 progresses
+from `0.072/0.075` for sequence vector evidence to `0.087/0.084` for combined
+BLAST+vector evidence and `0.094/0.088` after typed DAG compression. DAG keeps
+prompt coverage fixed but raises GO evidence-selection F1 from `0.933` to
+`1.000` (paired 95% CI for the delta: `[0.035, 0.105]`). Every evidence-bearing
+route has citation entailment `1.000`, no identifier outside the supplied pack,
+and complete mechanism abstention. Qwen2.5 on the identical DAG pack reproduces
+function/literature F1 `0.094/0.090`. This is structured evidence execution, not
+free-form biomedical reasoning. See
+[`reports/agent_application_ablation_qwen35.md`](reports/agent_application_ablation_qwen35.md)
+for the route ablation, paired intervals, generator control, and claim boundary.
+
+### R2R Application Bridge
+
+The production-style integration uses R2R for document CRUD, collections,
+ordinary text retrieval, and Agent APIs while BioRAG supplies sequence
+shortlisting, BLAST verification, and authoritative SeqLit-DAG paths. Build the
+default bundle without sending raw sequences through R2R's generic text
+embedding:
+
+```bash
+python scripts/export_seq_lit_r2r.py \
+  --source data/seq_lit_dag_swissprot_sample \
+  --output outputs/r2r/seq_lit_dag_swissprot_sample
+```
+
+The sample exports 985 text evidence documents, 2,231 entities, and 5,240 typed
+relationships. The same command over `data/seq_lit_dag_swissprot_2k` exports
+12,858 evidence documents, 22,939 entities, and 63,651 typed relationships. A
+separate `--include-sequence-documents` bundle is available
+only for the generic R2R text-only control. See
+[`docs/R2R_APPLICATION.md`](docs/R2R_APPLICATION.md) for live import, the frozen
+Agent route ablation, provenance fields, and the deployment boundary.
 
 For paper-scale sequence retrieval experiments on a 96 GB GPU, use the BF16
 merged CPT checkpoint as the main model:

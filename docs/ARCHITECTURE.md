@@ -33,6 +33,11 @@ User query
 
 The package currently implements the retrieval and evidence layer. It does not replace the upstream Open-Rosalind agent; it gives that agent a local-first `hybrid_bio_search` tool surface.
 
+For the production-style application, R2R can provide document CRUD,
+collections, ordinary text retrieval, access control, and Agent APIs. BioRAG is
+integrated as a typed evidence provider rather than replacing R2R. The boundary
+and import contract are documented in `docs/R2R_APPLICATION.md`.
+
 ## Retrieval Policy
 
 The agent-facing system should expose three operating modes:
@@ -56,7 +61,7 @@ For sequence queries, the preferred route is vector-coarse retrieval followed by
 BLAST fine reranking or verification:
 
 ```text
-OmniGene vector search
+Partition-specific vector search (ProtT5/DNABERT-2/OmniGene)
   -> instant context and top-N candidate IDs
   -> BLAST fine reranking / verification
   -> hybrid DRAG context pack
@@ -76,6 +81,10 @@ The canonical KB schema lives in `dnarag/localdb/schema.sql` and uses these core
 - `sequences`: protein, DNA, RNA, peptide, cDNA, 3Di, and DSSP records
 - `relations`: graph edges with evidence and metadata
 - `retrieval_evidence`: normalized retrieval hits from FTS, BLAST, vector, and graph routes
+
+SeqLit-DAG edges additionally expose `source_record`, `evidence_level`,
+`retrieval_score`, `verification_method`, and `database_version`. These fields
+are preserved when the graph is projected into an R2R collection.
 
 ## Retrieval Views
 
@@ -123,5 +132,5 @@ This keeps the project aligned with Open-Rosalind's trace-first design.
 - `graph_paths`: relation paths surfaced from graph expansion
 - `modality_views`: counts and routing information for text, DNA/protein sequence, and graph evidence
 - `generation_prompt`: a prompt-ready evidence pack for a separate local
-  instruction model; the current held-out Agent evaluation uses
-  Qwen2.5-7B-Instruct while keeping the biological retrieval encoder separate
+  instruction model; the held-out Agent evaluation keeps Qwen3.5/Qwen2.5
+  executor checks separate from the biological retrieval encoder

@@ -37,7 +37,12 @@ def graph_schema_sql() -> str:
         relation_type TEXT NOT NULL,
         target_entity_id TEXT NOT NULL,
         source TEXT,
+        source_record TEXT,
+        evidence_level TEXT,
         confidence REAL,
+        retrieval_score REAL,
+        verification_method TEXT,
+        database_version TEXT,
         metadata_json TEXT,
         PRIMARY KEY (source_entity_id, relation_type, target_entity_id, source)
     );
@@ -51,7 +56,7 @@ def graph_schema_sql() -> str:
 def manifest_schema() -> dict[str, object]:
     return {
         "dataset": "BioRAG-SeqLit-DAG",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "node_types": {
             "protein": "Reviewed UniProt/Swiss-Prot protein sequence entry.",
             "protein_window": "Local protein sequence window for retrieval tasks.",
@@ -69,6 +74,13 @@ def manifest_schema() -> dict[str, object]:
             "has_evidence": "protein -> evidence",
             "evidence_for_go": "evidence -> go_term",
             "supported_by_paper": "protein/go_term/evidence -> paper",
+        },
+        "edge_provenance": {
+            "source_record": "Stable local or upstream record identifier supporting the edge.",
+            "evidence_level": "Curated, alignment-verified, inferred, or unverified retrieval evidence class.",
+            "retrieval_score": "Optional query-time retrieval score; null for static curated edges.",
+            "verification_method": "Method used to establish or verify the edge.",
+            "database_version": "Upstream release or explicitly labeled local snapshot identifier.",
         },
         "dag_view": [
             "query_sequence",
