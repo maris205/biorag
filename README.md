@@ -33,6 +33,9 @@ inspectable evidence graphs.
 - **Citation-bounded Agent execution:** a development/test-frozen Graph-IDF
   selector feeds typed GO/PMID evidence to a local instruction model, with
   explicit abstention when mechanism evidence is unavailable.
+- **Audited token-semantics extension:** an exploratory token-to-protein-to-GO
+  graph tests whether frequency-derived sequence units carry biological
+  associations, with runtime-token, fixed 3-mer, and label-permutation controls.
 
 <p align="center">
   <img src="figures/fig6_drag_knowledge_graph_showcase.png" alt="DRAG knowledge graph showcase" width="92%">
@@ -195,6 +198,42 @@ function/literature F1 `0.094/0.090`. This is structured evidence execution, not
 free-form biomedical reasoning. See
 [`reports/agent_application_ablation_qwen35.md`](reports/agent_application_ablation_qwen35.md)
 for the route ablation, paired intervals, generator control, and claim boundary.
+
+### Exploratory Sequence-Token Graph
+
+The OmniGene tokenizer contains 19,994 literal `▶...` DNA and 7,974 `◆...`
+protein BPE entries. An implementation audit found zero such token hits on the
+current raw sequence inputs and zero biological-BPE IDs in large samples from
+the DNA and protein CPT binary parts. Current OmniGene retrieval results should
+therefore be attributed to sequence CPT through the base tokenizer, not to an
+isolated vocabulary-expansion effect.
+
+The standalone frequency-derived protein BPE segmentation is still useful as
+an exploratory graph view. On 2,000 parent-level Swiss-Prot records, the pilot
+finds 15 FDR-significant BPE-token-to-GO associations versus a length-stratified
+permutation mean of 0.12. However, overlapping fixed 3-mers recover 57
+associations, so the current result does not establish a BPE advantage or prove
+that tokens are biological motifs. Reproduce both checks with:
+
+```bash
+python scripts/audit_omnigene_bio_tokens.py
+python scripts/analyze_sequence_token_semantics.py --permutations 100
+python scripts/eval_seq_token_graph_retrieval.py
+```
+
+The held-out retrieval ablation learns every token-to-GO edge from the 1,901
+index proteins and reports a frozen 66-query test split. Direct BPE BM25 reaches
+Hit@100 `0.3788`, fixed 3-mer BM25 reaches `0.4091`, and GO graph expansion
+reaches `0.3333`, compared with `0.5758` for ProtT5. A development-selected
+candidate-tail route preserves ProtT5 Hit@10/50 and changes Hit@100 to `0.5909`
+by recovering one additional query, but its confidence interval includes no
+gain and paper retrieval does not change. The token graph is therefore retained
+as an explanatory evidence layer, not as an improved primary retriever.
+
+See [`reports/omnigene_bio_token_audit.md`](reports/omnigene_bio_token_audit.md),
+[`reports/sequence_token_semantics_pilot.md`](reports/sequence_token_semantics_pilot.md),
+[`reports/seq_token_graph_retrieval.md`](reports/seq_token_graph_retrieval.md),
+and [`docs/SEQUENCE_TOKEN_SEMANTICS_PLAN.md`](docs/SEQUENCE_TOKEN_SEMANTICS_PLAN.md).
 
 ### R2R Application Bridge
 

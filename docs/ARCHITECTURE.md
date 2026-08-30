@@ -13,7 +13,7 @@ Open-Rosalind contributes the agent contract:
 OmniGene-4 contributes the representation layer:
 
 - CPT is treated as the preferred sequence/text embedding checkpoint
-- the main configured full merged CPT model is Gemma-4 based and includes biological sequence vocabulary for DNA, protein, 3Di, and DSSP tokens
+- the main configured full merged CPT model is Gemma-4 based and contains added vocabulary entries for DNA, protein, 3Di, and DSSP tokens; an activation audit found that the literal prefixed DNA/protein BPE entries are not invoked by the current plain-sequence input path, so current retrieval results are not attributed to those added entries
 - SFT or chat models remain responsible for routing, synthesis, and final answers
 - typed prompts are used so the model sees whether an item is a paper, protein, pathway, or sequence
 
@@ -96,7 +96,7 @@ Uses the Swiss-Prot BLAST database under the Standard KB index directory.
 
 Vector:
 Uses a pluggable embedding backend. ProtT5-XL-UniRef50 with mean pooling is the selected default for protein-only partitions on the completed held-out controls; ESM-2 650M mean is the lower-memory alternative. OmniGene-4 CPT remains available for unified biological sequence/text and agent-facing contexts. The transformer embedders take the last hidden layer and apply attention-mask mean pooling over token hidden states, followed by L2 normalization; they do not use next-token logits. A `last`/`eos` pooling option uses the last valid token hidden state and should be treated as a pooling ablation. A deterministic hashing backend exists only for development smoke tests.
-Vector inputs are typed before tokenization, for example `[TYPE=protein_sequence]`, `[TYPE=paper]`, `[TYPE=protein]`, and `[TYPE=pathway]`. This is intentional: the OmniGene CPT tokenizer has biological sequence tokens, and the type prefix keeps sequence/text/entity records comparable without hiding what modality each item came from.
+Vector inputs are typed before tokenization, for example `[TYPE=protein_sequence]`, `[TYPE=paper]`, `[TYPE=protein]`, and `[TYPE=pathway]`. The type prefix gives the model explicit modality context and keeps sequence/text/entity records comparable. It should not be confused with activation of OmniGene's literal `▶...` DNA or `◆...` protein BPE entries: the current raw-sequence path does not invoke those entries. See `reports/omnigene_bio_token_audit.md`.
 For the RAG POC, vectors are imported into a local persistent Chroma store under `indexes/standard/vector/chroma/`.
 The Chroma adapter supports record-level add, upsert, update, delete, get, and query operations.
 The older SQLite/NumPy vector store remains as a simple fallback. FAISS CPU/GPU
@@ -110,6 +110,8 @@ Multi-view DRAG:
 The first experiment should build DNA, protein, and mixed English/sequence views with the same text-style evidence graph recipe used for ordinary RAG: typed records, nearest-neighbor evidence, aliases, co-retrieved entities, and graph expansion. Biological rules such as BLAST-derived homology, motif calling, or domain databases can be added later as explicit ablations. Keeping the first graph mostly method-agnostic lets the paper ask a cleaner question: whether biological meaning emerges from a unified representation and evidence graph rather than from hand-coded biology.
 
 `python -m dnarag.cli build-view-graph` implements the first POC of that idea. It samples a Chroma collection, turns records into graph nodes, and adds `vector_neighbor` edges from cosine nearest neighbors. The graph metadata marks the recipe as `text_style_vector_neighbors` and `biological_rules_used=false` so later rule-enriched graphs can be compared cleanly.
+
+An additional exploratory token layer treats frequency-derived sequence BPE units as candidate graph nodes, not as asserted motifs. Deterministic `observed_in_sequence` edges connect tokens to parent proteins, while BH-FDR-controlled `statistically_associated_with` edges connect tokens to GO terms. These computed edges remain separate from curated GOA/PubMed evidence. The current pilot finds non-random protein-token associations but a fixed 3-mer control is stronger, so motif-level or CPT-learned semantics are not claimed.
 
 In the paper framing, these views are not just search accelerators. A sequence-derived graph can become a biological representation layer: DNA records connect to transcripts, proteins, variants, and annotations; protein records connect to function, pathway, and literature evidence; mixed English records connect claims and entity descriptions back into the same local Bio-KB. The system can therefore compare text-only RAG, sequence-vector RAG, single-view DRAG, and unified multi-view DRAG on both retrieval quality and traceable biological paths.
 

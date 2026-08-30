@@ -20,7 +20,7 @@ metrics. The ignored JSON outputs can be regenerated with the commands below.
 Install the package in editable mode:
 
 ```bash
-python -m pip install -e ".[test,chroma,vector]"
+python -m pip install -e ".[test,chroma,vector,analysis]"
 ```
 
 The smoke tests do not require model downloads:
@@ -55,6 +55,51 @@ indexes/
 ```
 
 These directories are ignored by Git because they are large and machine-local.
+
+## Sequence-Token Semantics Audit
+
+Audit whether the added OmniGene DNA/protein BPE entries are activated by the
+current raw sequence path and by sampled CPT binary records:
+
+```bash
+python scripts/audit_omnigene_bio_tokens.py
+```
+
+Build the parent-level exploratory token-to-protein-to-GO extension over the 2k
+SeqLit resource. The run compares intended protein BPE units, current runtime
+tokens, and overlapping fixed 3-mers using BH-FDR and length-stratified GO-label
+permutations:
+
+```bash
+python scripts/analyze_sequence_token_semantics.py \
+  --permutations 100 \
+  --output-report reports/sequence_token_semantics_pilot.md \
+  --graph-output data/seq_token_semantics_pilot
+```
+
+The graph output is exploratory and generated locally. Its
+`statistically_associated_with` edges are not curated motif or causal evidence.
+See `docs/SEQUENCE_TOKEN_SEMANTICS_PLAN.md` for the required UniRef50 and
+PROSITE/Pfam controls.
+
+Evaluate direct token-to-protein retrieval, token-to-GO-to-protein expansion,
+fixed 3-mer controls, reciprocal-rank fusion, and candidate-tail replacement on
+the same 33/66 development/test split used by the Agent selector:
+
+```bash
+python scripts/eval_seq_token_graph_retrieval.py \
+  --prott5-results reports/results/seq_lit_dag_function_heldout_2k_prott5_top100_full_details.json \
+  --cpu-results reports/results/seq_lit_dag_function_heldout_2k_cpu_top100.json \
+  --test-ids reports/results/agent_graph_selector_fused_full_p20_test_ids.txt \
+  --output-report reports/seq_token_graph_retrieval.md
+```
+
+The command consumes top-100 ProtT5, BLAST, and k-mer rankings. Generate those
+inputs with the same held-out documents and `--protein-k 100 --paper-k 200`
+before running the ablation. All token associations are rebuilt from index-side
+proteins only; the 99 held-out parents never contribute graph edges. Candidate
+tail length is selected on 33 development queries, then frozen for the 66 test
+queries.
 
 ## Core Commands
 

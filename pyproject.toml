@@ -26,6 +26,11 @@ chroma = [
 r2r = [
     "r2r>=3.6,<4",
 ]
+analysis = [
+    "scipy>=1.10",
+    "tokenizers>=0.15",
+    "transformers>=4.35",
+]
 test = [
     "pytest>=8.0",
 ]
