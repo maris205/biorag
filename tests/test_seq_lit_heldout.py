@@ -1,5 +1,5 @@
 from scripts.build_seq_lit_heldout import make_ground_truth
-from scripts.eval_seq_lit_heldout_cpu import dataset_name, evaluate_one
+from scripts.eval_seq_lit_heldout_cpu import claim_scope, dataset_name, evaluate_one
 from dnarag.seq_lit_dag.evaluate import ProteinCandidate
 
 
@@ -29,3 +29,12 @@ def test_heldout_eval_uses_curated_labels_not_model_output():
 
 def test_function_queries_receive_function_dataset_label():
     assert "function" in dataset_name([{"expected_go_ids": ["GO:1"]}])
+
+
+def test_cluster_heldout_queries_receive_strict_claim_scope():
+    uniref = [{"task": "uniref50_cluster_heldout_sequence_to_function_to_literature"}]
+    identity = [{"task": "identity_cluster_heldout_sequence_to_function_to_literature"}]
+    assert "UniRef50" in dataset_name(uniref)
+    assert "same observed UniRef50 cluster" in claim_scope(uniref)
+    assert "stress test" in dataset_name(identity)
+    assert "cluster-stratified stress test" in claim_scope(identity)

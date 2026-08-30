@@ -2,6 +2,8 @@ from pathlib import Path
 
 from scripts.evaluate_agent_evidence import (
     build_pack,
+    evidence_claim_scope,
+    evidence_dataset_name,
     load_documents,
     parse_method_files,
     rank_graph_claims,
@@ -32,6 +34,12 @@ def test_method_file_supports_shared_result_method_selector():
     result = parse_method_files(["BLAST=results.json#blast", "ProtT5=vector.json"])
     assert result["BLAST"] == (Path("results.json"), "blast")
     assert result["ProtT5"][1] is None
+
+
+def test_cluster_agent_evidence_metadata_preserves_split_boundary():
+    queries = [{"task": "uniref50_cluster_heldout_sequence_to_function_to_literature"}]
+    assert "UniRef50" in evidence_dataset_name(queries)
+    assert "observed UniRef50 cluster" in evidence_claim_scope(queries)
 
 
 def test_load_documents_merges_protein_and_typed_evidence_rows(tmp_path):

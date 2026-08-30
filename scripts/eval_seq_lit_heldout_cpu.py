@@ -132,12 +132,30 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, float]:
 
 
 def dataset_name(queries: list[dict[str, Any]]) -> str:
+    task = query_task(queries)
+    if task.startswith("uniref50_cluster_heldout"):
+        return "BioRAG-SeqLit-DAG UniRef50-cluster-held-out path evaluation"
+    if task.startswith("identity_cluster_heldout"):
+        return "BioRAG-SeqLit-DAG identity-cluster-held-out path stress test"
     if queries and queries[0].get("expected_go_ids"):
         return "BioRAG-SeqLit-DAG held-out sequence-to-function-to-paper pilot"
     return "BioRAG-SeqLit-DAG held-out parent direct-paper pilot"
 
 
 def claim_scope(queries: list[dict[str, Any]]) -> str:
+    task = query_task(queries)
+    if task.startswith("uniref50_cluster_heldout"):
+        return (
+            "The query protein and every protein assigned to the same observed UniRef50 cluster are absent "
+            "from the index. Relevance is low-frequency shared GO plus index-side GOA paper evidence. This "
+            "small control does not establish Pfam-clan, species, temporal, or remote-homology generalization."
+        )
+    if task.startswith("identity_cluster_heldout"):
+        return (
+            "The query protein and its full BLASTP connected component at the configured identity and "
+            "shorter-sequence coverage thresholds are absent from the index. Queries intentionally prioritize "
+            "non-singleton components, so this is a cluster-stratified stress test rather than a prevalence sample."
+        )
     if queries and queries[0].get("expected_go_ids"):
         return (
             "Held-out parent accessions are absent from the index. Relevance is low-frequency shared GO plus "
@@ -147,6 +165,10 @@ def claim_scope(queries: list[dict[str, Any]]) -> str:
         "Held-out parent accessions are absent from the index. Relevance is curated shared-PMID connectivity, "
         "not general paper topical relevance or held-out family homology."
     )
+
+
+def query_task(queries: list[dict[str, Any]]) -> str:
+    return str(queries[0].get("task") or "") if queries else ""
 
 
 def parse_args() -> argparse.Namespace:

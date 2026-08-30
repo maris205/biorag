@@ -183,8 +183,20 @@ index and defines relevance using low-frequency shared GO terms plus index-side
 GOA citations. At candidate top-50 / paper top-200, ProtT5 reaches paper
 Hit/Recall `0.465/0.248`, versus ESM-2 `0.364/0.203`, BLAST `0.242/0.135`, and
 k-mer Jaccard `0.313/0.147`. The split has zero exact-accession and full-sequence
-substring overlap, but family-cluster holdout remains required before making a
-strong biological generalization claim.
+substring overlap. It is retained as the accession-masked application split,
+not as a family-independent benchmark.
+
+Two 100-query cluster controls now tighten that boundary. In the observed
+UniRef50-cluster holdout, ProtT5/BLASTP candidate Hit@10 is `0.430/0.340`; in a
+harder identity-30 component stress test it is `0.220/0.150`. The paired MRR
+deltas favor ProtT5 in both controls, while simple ProtT5+BLAST reciprocal-rank
+fusion is mixed and degrades identity-30 MRR. Under a 20-paper Agent budget,
+strict typed-path rates are `0.390/0.340/0.040` for ProtT5/BLASTP/random on
+UniRef50 and `0.190/0.160/0.020` on identity-30. A frozen Graph-IDF selector
+improves literature F1 on UniRef50 but not on identity-30, so the graph claim is
+task-specific rather than universal. See
+[`reports/seq_lit_cluster_heldout_evaluation.md`](reports/seq_lit_cluster_heldout_evaluation.md)
+for split audits, paired intervals, latency, Agent evidence, and limitations.
 
 The final application evaluation uses 33 development and 66 frozen test
 queries. With Qwen3.5-9B fixed across routes, function/literature F1 progresses

@@ -300,6 +300,136 @@ instant latency or evidence that candidate-BLAST is faster than full BLASTN.
 The consolidated interpretation is in
 `reports/dna_vector_backend_latency.md`.
 
+## Cluster-Held-Out SeqLit-DAG Controls
+
+Build the observed UniRef50-cluster holdout from the 2k SeqLit resource and the
+local UniProt selected-ID mapping. The builder streams only until all 2,000
+accessions are mapped, removes complete observed clusters, writes a leakage
+manifest, and creates the index-side BLASTP database:
+
+```bash
+python scripts/build_seq_lit_uniref50_heldout.py \
+  --source data/seq_lit_dag_swissprot_2k \
+  --output data/seq_lit_dag_uniref50_heldout_2k \
+  --idmapping /autodl-fs/data/open-rosalind-kb/standard/raw/uniprot/idmapping_selected.tab.gz \
+  --queries 100 --seed 20260831
+```
+
+Build the identity-30 stress split. It clusters an all-vs-all BLASTP graph at
+30% pair identity and 80% coverage of the shorter sequence, selects
+non-singleton components, and excludes each selected component in full:
+
+```bash
+python scripts/build_seq_lit_identity_heldout.py \
+  --source data/seq_lit_dag_swissprot_2k \
+  --output data/seq_lit_dag_identity30_heldout_2k \
+  --queries 100 --min-identity 30 --min-shorter-coverage 0.8 \
+  --prioritize-non-singleton --threads 16 --seed 20260831
+```
+
+Run the CPU routes on either split. This UniRef50 command stores full top-50
+protein and top-200 paper rankings; replace the split prefix with
+`seq_lit_dag_identity30_heldout_2k` for the stress control:
+
+```bash
+python scripts/eval_seq_lit_heldout_cpu.py \
+  --queries data/seq_lit_dag_uniref50_heldout_2k/queries.jsonl \
+  --documents data/seq_lit_dag_uniref50_heldout_2k/index_documents.jsonl \
+  --graph-db data/seq_lit_dag_swissprot_2k/graph.sqlite \
+  --blast-db data/seq_lit_dag_uniref50_heldout_2k/blast/index \
+  --protein-k 50 --paper-k 200 --seed 20260831 \
+  --output reports/results/seq_lit_dag_uniref50_cpu_top50.json
+```
+
+Run ProtT5 BF16 with 128-residue windows and stride 64. `--no-reuse-index`
+reproduces both index-build and warm query latency; subsequent checks can use
+`--reuse-index`:
+
+```bash
+PROTT5=/path/to/Rostlab/prot_t5_xl_uniref50
+CUDA_VISIBLE_DEVICES=0 TRANSFORMERS_OFFLINE=1 \
+python scripts/eval_seq_lit_embeddings.py \
+  --name prott5_mean --index-name prott5_mean \
+  --backend prott5 --model "$PROTT5" --pooling mean --dtype bf16 --batch-size 16 \
+  --documents data/seq_lit_dag_uniref50_heldout_2k/index_documents.jsonl \
+  --queries data/seq_lit_dag_uniref50_heldout_2k/queries.jsonl \
+  --graph-db data/seq_lit_dag_swissprot_2k/graph.sqlite \
+  --vector-dir indexes/seq_lit_dag_uniref50_heldout_2k/embedding_eval \
+  --protein-k 50 --paper-k 200 --window-size 128 --window-stride 64 \
+  --limit 0 --no-reuse-index \
+  --output reports/results/seq_lit_dag_uniref50_prott5_top50.json
+```
+
+Create the saved ProtT5+BLAST RRF ablation, then calculate paired query
+bootstrap intervals:
+
+```bash
+python scripts/fuse_seq_lit_rankings.py \
+  --left reports/results/seq_lit_dag_uniref50_prott5_top50.json \
+  --right reports/results/seq_lit_dag_uniref50_cpu_top50.json \
+  --right-method blast \
+  --queries data/seq_lit_dag_uniref50_heldout_2k/queries.jsonl \
+  --graph-db data/seq_lit_dag_swissprot_2k/graph.sqlite \
+  --protein-k 50 --paper-k 200 --rrf-k 60 --name prott5_blast_rrf \
+  --output reports/results/seq_lit_dag_uniref50_prott5_blast_rrf_top50.json
+```
+
+```bash
+python scripts/analyze_seq_lit_cluster_heldout.py \
+  --label 'UniRef50-cluster-held-out SeqLit-DAG Evaluation' \
+  --claim-scope 'The query and its observed UniRef50 cluster are absent from the index.' \
+  --cpu reports/results/seq_lit_dag_uniref50_cpu_top50.json \
+  --vector reports/results/seq_lit_dag_uniref50_prott5_top50.json \
+  --fusion reports/results/seq_lit_dag_uniref50_prott5_blast_rrf_top50.json \
+  --output reports/results/seq_lit_dag_uniref50_cluster_analysis.json
+```
+
+Materialize the 20-paper deterministic evidence evaluation and freeze the
+Graph-IDF selector on a 33/67 development/test split:
+
+```bash
+python scripts/evaluate_agent_evidence.py \
+  --queries data/seq_lit_dag_uniref50_heldout_2k/queries.jsonl \
+  --documents data/seq_lit_dag_uniref50_heldout_2k/index_documents.jsonl \
+  --methods \
+  'Random=reports/results/seq_lit_dag_uniref50_cpu_top50.json#random' \
+  'k-mer=reports/results/seq_lit_dag_uniref50_cpu_top50.json#kmer_jaccard' \
+  'BLAST=reports/results/seq_lit_dag_uniref50_cpu_top50.json#blast' \
+  'ProtT5=reports/results/seq_lit_dag_uniref50_prott5_top50.json' \
+  'ProtT5+BLAST=reports/results/seq_lit_dag_uniref50_prott5_blast_rrf_top50.json' \
+  --candidate-k 50 --paper-k 20 \
+  --output reports/results/agent_evidence_uniref50_p20.json \
+  --markdown reports/agent_evidence_uniref50_p20.md
+
+python scripts/evaluate_agent_qa.py \
+  --input reports/results/seq_lit_dag_uniref50_prott5_top50.json --method all \
+  --queries data/seq_lit_dag_uniref50_heldout_2k/queries.jsonl \
+  --documents data/seq_lit_dag_uniref50_heldout_2k/index_documents.jsonl \
+  --candidate-k 50 --paper-k 20 --selector rank_first --limit 0 \
+  --output reports/results/agent_qa_uniref50_prott5_p20.json \
+  --markdown reports/agent_qa_uniref50_prott5_p20.md \
+  --dump-packs reports/results/agent_qa_uniref50_prott5_p20_packs.jsonl
+
+python scripts/evaluate_graph_evidence_selector.py \
+  --packs reports/results/agent_qa_uniref50_prott5_p20_packs.jsonl \
+  --queries data/seq_lit_dag_uniref50_heldout_2k/queries.jsonl \
+  --documents data/seq_lit_dag_uniref50_heldout_2k/index_documents.jsonl \
+  --dev-fraction 0.33 --seed 20260831 \
+  --output reports/results/agent_graph_selector_uniref50_prott5_p20.json \
+  --markdown reports/agent_graph_selector_uniref50_prott5_p20.md \
+  --export-packs reports/results/agent_graph_selector_uniref50_prott5_p20_packs.jsonl \
+  --test-ids reports/results/agent_graph_selector_uniref50_prott5_p20_test_ids.txt
+```
+
+Repeat the three commands with the identity-30 prefixes for the stress control,
+and with the RRF file for the fused selector route.
+
+The two split manifests, retrieval intervals, 20-paper evidence-pack results,
+frozen 33/67 selector analysis, and latency boundary are consolidated in
+`reports/seq_lit_cluster_heldout_evaluation.md`. The UniRef50 sample is mostly
+singleton clusters; identity-30 is a deliberately selected stress test. Neither
+is a Pfam-clan, taxonomy, temporal, or remote-homology benchmark.
+
 ## Held-Out Agent Evidence Evaluation
 
 The deterministic evidence evaluation converts held-out sequence retrieval

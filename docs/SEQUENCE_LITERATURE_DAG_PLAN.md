@@ -358,8 +358,8 @@ the curated graph from 200 to 2,000 proteins yields 99 held-out queries, 1,901
 index proteins, 132 low-frequency GO labels, and 377 index-side PMIDs, with zero
 exact-parent or full-sequence substring leakage. BLAST is stronger at top-10
 candidate ranking, while k-mer retrieval at top-50 broadens paper coverage over
-random. The next GPU run is therefore ProtT5 and ESM-2 on this fixed split,
-followed by a family-cluster audit before treating the result as claim-bearing.
+random. This remains the accession-masked application split rather than a
+family-independent biological benchmark.
 
 The fixed-split GPU run is complete. At top-50 candidates, ProtT5 reaches paper
 Hit/Recall `0.465/0.248`, ESM-2 `0.364/0.203`, BLAST `0.242/0.135`, k-mer
@@ -371,6 +371,43 @@ literature discovery, not evidence that dense retrieval supersedes alignment.
 A simple ProtT5+BLAST RRF ablation reduces paper coverage and should remain a
 negative engineering result. The next combination experiment should use vector
 coarse selection followed by candidate-subset BLAST reranking with unaligned
-vector candidates retained. Before using the held-out result as the manuscript's
-primary biological claim, add sequence-family clustering and repeat the split
-at family level.
+vector candidates retained.
+
+## Cluster-Held-Out Application Controls
+
+The sequence-family audit is now implemented as two complementary 100-query
+controls over the same 2,000-protein resource:
+
+| Split | Index proteins | Extra cluster exclusions | ProtT5 Hit@10 / MRR | BLASTP Hit@10 / MRR |
+|---|---:|---:|---:|---:|
+| Observed UniRef50 cluster | 1,892 | 8 | 0.430 / 0.317 | 0.340 / 0.257 |
+| Identity-30 component stress test | 1,732 | 168 | 0.220 / 0.154 | 0.150 / 0.108 |
+
+The UniRef50 sample is highly deduplicated: only 8 of the selected query
+clusters contain another source protein. It is therefore a standard
+same-UniRef50-cluster leakage control but not a strong family-diversity sample.
+The identity-30 split removes every BLASTP connected component member meeting
+30% pair identity and 80% shorter-sequence coverage, and deliberately selects
+100 non-singleton components. It is a harder cluster-stratified stress test,
+not a natural-prevalence benchmark or Pfam-clan holdout.
+
+Paired query bootstrap intervals support a complementary dense route. ProtT5
+minus BLASTP MRR is `+0.061 [0.004, 0.120]` on UniRef50 and
+`+0.047 [0.008, 0.091]` on identity-30. These labels measure recovery of an
+index protein sharing a low-frequency GO term and index-side GOA literature,
+not alignment correctness. Reciprocal-rank fusion is not robust: it changes
+identity-30 MRR by `-0.028 [-0.054, -0.007]` relative to ProtT5.
+
+The Agent-facing result uses 50 protein candidates and only 20 papers. ProtT5,
+BLASTP, and random strict typed-path rates are `0.390/0.340/0.040` on UniRef50
+and `0.190/0.160/0.020` on identity-30. On a frozen 67-query UniRef50 test split,
+Graph-IDF improves literature F1 over rank-first by
+`+0.0178 [0.0030, 0.0322]`; the identity-30 delta is unresolved. Graph-IDF can
+therefore be claimed as evidence compression and literature ordering in one
+standard control, not as a general function-retrieval improvement.
+
+The consolidated results, engineering latency, oracle gaps, and claim boundary
+are recorded in `reports/seq_lit_cluster_heldout_evaluation.md`. The next
+claim-bearing expansion should use a larger taxonomy-diverse corpus with Pfam
+clan, species, and temporal controls rather than further tuning on this 2k
+sample.

@@ -1,4 +1,11 @@
-from scripts.eval_seq_lit_embeddings import embedding_dataset_name, first_rank, make_windows, rank_pmids, summarize
+from scripts.eval_seq_lit_embeddings import (
+    embedding_claim_scope,
+    embedding_dataset_name,
+    first_rank,
+    make_windows,
+    rank_pmids,
+    summarize,
+)
 
 
 def test_rank_pmids_preserves_candidate_order_and_deduplicates():
@@ -24,3 +31,9 @@ def test_make_windows_includes_tail_and_parent_mapping():
 
 def test_heldout_embedding_dataset_is_labeled_separately():
     assert "held-out" in embedding_dataset_name([{"relevant_index_accessions": ["P1"]}])
+
+
+def test_cluster_heldout_embedding_scope_is_not_generic():
+    queries = [{"task": "identity_cluster_heldout_sequence_to_function_to_literature"}]
+    assert "stress test" in embedding_dataset_name(queries)
+    assert "BLASTP connected component" in embedding_claim_scope(queries)

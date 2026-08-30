@@ -59,12 +59,10 @@ def main() -> None:
             )
 
     summary = summarize_by_method(all_rows)
+    query_rows = list(queries.values())
     output = {
-        "dataset": "BioRAG-SeqLit-DAG deterministic agent evidence evaluation",
-        "claim_scope": (
-            "This evaluates evidence-pack construction and label-based citation support without an LLM. "
-            "It is not a human or model answer-quality benchmark. Relevance follows the held-out split labels."
-        ),
+        "dataset": evidence_dataset_name(query_rows),
+        "claim_scope": evidence_claim_scope(query_rows),
         "queries": len(queries),
         "methods": {name: str(path) for name, (path, _source_method) in methods.items()},
         "candidate_k": args.candidate_k,
@@ -80,6 +78,34 @@ def main() -> None:
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.write_text(render_markdown(output), encoding="utf-8")
     print(json.dumps({"output": str(output_path), "markdown": str(markdown_path), "summary": summary}, indent=2))
+
+
+def evidence_dataset_name(queries: list[dict[str, Any]]) -> str:
+    task = str(queries[0].get("task") or "") if queries else ""
+    if task.startswith("uniref50_cluster_heldout"):
+        return "BioRAG-SeqLit-DAG UniRef50-cluster-held-out Agent evidence evaluation"
+    if task.startswith("identity_cluster_heldout"):
+        return "BioRAG-SeqLit-DAG identity-cluster-held-out Agent evidence stress test"
+    return "BioRAG-SeqLit-DAG deterministic agent evidence evaluation"
+
+
+def evidence_claim_scope(queries: list[dict[str, Any]]) -> str:
+    task = str(queries[0].get("task") or "") if queries else ""
+    prefix = (
+        "This evaluates evidence-pack construction and label-based citation support without an LLM. "
+        "It is not a human or model answer-quality benchmark. "
+    )
+    if task.startswith("uniref50_cluster_heldout"):
+        return prefix + (
+            "The query and every protein in its observed UniRef50 cluster are absent from the index; the small "
+            "control does not establish Pfam-clan, species, temporal, or remote-homology generalization."
+        )
+    if task.startswith("identity_cluster_heldout"):
+        return prefix + (
+            "The query's full thresholded BLASTP component is absent from the index. Queries prioritize "
+            "non-singleton components, so this is a cluster-stratified stress test rather than a prevalence sample."
+        )
+    return prefix + "Relevance follows the held-out split labels."
 
 
 def build_pack(
@@ -336,7 +362,7 @@ def summarize_by_method(rows: list[dict[str, Any]]) -> dict[str, dict[str, float
 
 def render_markdown(result: dict[str, Any]) -> str:
     lines = [
-        "# Agent Evidence Evaluation",
+        f"# {result['dataset']}",
         "",
         result["claim_scope"],
         "",
