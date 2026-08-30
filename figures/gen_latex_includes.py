@@ -27,6 +27,16 @@ FIGURES = [
         "fig5_drag_biology.pdf",
         "DRAG biological-structure analysis. Vector, BLAST, and hybrid graphs expose different graph connectivity, functional enrichment, and literature-sharing patterns; these signals support hypothesis-generating biological evidence organization.",
     ),
+    (
+        "fig:drag_showcase",
+        "fig6_drag_knowledge_graph_showcase.pdf",
+        "DRAG evidence graph showcase. Saved agent traces expose typed vector and BLAST neighborhoods as inspectable graph evidence rather than isolated ranked hits.",
+    ),
+    (
+        "fig:seq_lit_dag",
+        "fig7_seq_lit_dag.pdf",
+        "BioRAG-SeqLit-DAG. A held-out protein sequence enters a curated evidence path through UniProt candidates, GO/GOA evidence, and PubMed citations; Graph-IDF creates a bounded local-Agent pack whose outputs must cite or abstain.",
+    ),
 ]
 
 

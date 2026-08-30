@@ -86,11 +86,13 @@ BLAST:
 Uses the Swiss-Prot BLAST database under the Standard KB index directory.
 
 Vector:
-Uses a pluggable embedding backend. OmniGene-4 CPT is available for unified biological sequence/text and agent-facing contexts, while public encoder backends such as ESM-2 and ProtT5 can be used for protein-only partitions. The transformer embedders take the last hidden layer and apply attention-mask mean pooling over token hidden states, followed by L2 normalization; they do not use next-token logits. A `last`/`eos` pooling option uses the last valid token hidden state and should be treated as a pooling ablation. A deterministic hashing backend exists only for development smoke tests.
+Uses a pluggable embedding backend. ProtT5-XL-UniRef50 with mean pooling is the selected default for protein-only partitions on the completed held-out controls; ESM-2 650M mean is the lower-memory alternative. OmniGene-4 CPT remains available for unified biological sequence/text and agent-facing contexts. The transformer embedders take the last hidden layer and apply attention-mask mean pooling over token hidden states, followed by L2 normalization; they do not use next-token logits. A `last`/`eos` pooling option uses the last valid token hidden state and should be treated as a pooling ablation. A deterministic hashing backend exists only for development smoke tests.
 Vector inputs are typed before tokenization, for example `[TYPE=protein_sequence]`, `[TYPE=paper]`, `[TYPE=protein]`, and `[TYPE=pathway]`. This is intentional: the OmniGene CPT tokenizer has biological sequence tokens, and the type prefix keeps sequence/text/entity records comparable without hiding what modality each item came from.
 For the RAG POC, vectors are imported into a local persistent Chroma store under `indexes/standard/vector/chroma/`.
 The Chroma adapter supports record-level add, upsert, update, delete, get, and query operations.
-The older SQLite/NumPy vector store remains as a simple fallback, and FAISS can be added later for local performance.
+The older SQLite/NumPy vector store remains as a simple fallback. FAISS CPU/GPU
+is used for lookup-only local performance measurements; production concurrency
+remains outside the current POC.
 
 DRAG graph:
 Builds a graph from Standard index documents and structured xrefs. First-pass graph nodes include HGNC genes, GO terms, Reactome pathways, ClinVar summaries, UniProt xrefs, NCBI Gene xrefs, and Ensembl xrefs. Generated graph artifacts are repo-local by default under `indexes/standard/graph`.
@@ -120,4 +122,6 @@ This keeps the project aligned with Open-Rosalind's trace-first design.
 - `citations`: compact evidence blocks with stable IDs such as `E1`
 - `graph_paths`: relation paths surfaced from graph expansion
 - `modality_views`: counts and routing information for text, DNA/protein sequence, and graph evidence
-- `generation_prompt`: a prompt-ready evidence pack for a local Gemma/Open-Rosalind answer model
+- `generation_prompt`: a prompt-ready evidence pack for a separate local
+  instruction model; the current held-out Agent evaluation uses
+  Qwen2.5-7B-Instruct while keeping the biological retrieval encoder separate

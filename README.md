@@ -27,9 +27,19 @@ inspectable evidence graphs.
   while BLAST remains the verified route.
 - **DRAG evidence graphs:** sequence hits are returned as typed neighborhoods
   rather than isolated ranked records.
+- **Sequence-first literature discovery:** BioRAG-SeqLit-DAG links protein
+  sequences to curated GO evidence and PubMed citations, so raw sequences can
+  become entry points into literature evidence.
+- **Citation-bounded Agent execution:** a development/test-frozen Graph-IDF
+  selector feeds typed GO/PMID evidence to a local instruction model, with
+  explicit abstention when mechanism evidence is unavailable.
 
 <p align="center">
   <img src="figures/fig6_drag_knowledge_graph_showcase.png" alt="DRAG knowledge graph showcase" width="92%">
+</p>
+
+<p align="center">
+  <img src="figures/fig7_seq_lit_dag.png" alt="BioRAG-SeqLit-DAG sequence-to-literature evidence graph" width="92%">
 </p>
 
 ## Paper Snapshot
@@ -105,6 +115,83 @@ Chroma CRUD is available through `vector-db add`, `upsert`, `update`, `delete`, 
 The lightweight SQLite/NumPy vector DB remains available as `--engine simple` for fallback and inspection.
 Vector targets can include `text`, `protein_sequence`, `dna_sequence`, `protein_sequence_window`, `dna_sequence_window`, and `mixed`.
 DNA and protein sequence queries prefer the window collections when those collections exist; use `--vector-target mixed` for explicit mixed English/sequence retrieval.
+
+Build the CPU-only BioRAG-SeqLit-DAG sample without opening a GPU:
+
+```bash
+python scripts/build_seq_lit_dag.py \
+  --config configs/seq_lit_dag_swissprot_sample.yaml \
+  --output data/seq_lit_dag_swissprot_sample \
+  --limit-proteins 200 \
+  --max-go-annotations-per-protein 8 \
+  --max-windows-per-protein 2 \
+  --pubmed-xml-limit 0 \
+  --reset
+```
+
+This exports `graph.sqlite`, `nodes.jsonl`, `edges.jsonl`, `documents.jsonl`,
+and `sample_queries.jsonl`. By default it keeps paper nodes as PMID-backed
+citations; set `--pubmed-xml-limit` only when you want to scan local PubMed XML
+files for titles and abstracts.
+
+Enrich only the referenced PMIDs through a small resumable metadata cache, then
+rebuild without scanning the 44 GB local baseline:
+
+```bash
+python scripts/fetch_pubmed_metadata.py \
+  --input data/seq_lit_dag_swissprot_sample/documents.jsonl \
+  --output /tmp/biorag_seq_lit_pubmed_metadata.jsonl
+python scripts/build_seq_lit_dag.py \
+  --config configs/seq_lit_dag_swissprot_sample.yaml \
+  --output data/seq_lit_dag_swissprot_sample \
+  --pubmed-cache /tmp/biorag_seq_lit_pubmed_metadata.jsonl \
+  --limit-proteins 200 --reset
+```
+
+The CPU POC can also be persisted in Chroma and checked end to end:
+
+```bash
+python scripts/import_seq_lit_chroma.py --reset
+python scripts/eval_seq_lit_dag_cpu.py --limit 50
+```
+
+The hashing collection is a plumbing smoke test, not a scientific embedding
+baseline. Likewise, the generated queries are in-index parent windows, so the
+CPU evaluation validates evidence-path completeness rather than held-out
+biological retrieval.
+
+Run one scientific protein encoder condition on the SeqLit-DAG sample:
+
+```bash
+python scripts/eval_seq_lit_embeddings.py \
+  --name prott5_mean --backend prott5 \
+  --model Rostlab/prot_t5_xl_uniref50 \
+  --pooling mean --dtype bf16 --batch-size 16 \
+  --output reports/results/seq_lit_dag_prott5_mean.json
+```
+
+The completed 50-query integration comparison favors specialized protein
+encoders: ProtT5 reaches protein Hit@1 `1.00`, ESM-2 `0.96`, and OmniGene BF16
+`0.90`. These are in-index path checks, not held-out homology claims; see
+`reports/seq_lit_embedding_comparison.md` for latency and paper-path metrics.
+
+The stricter 2k-resource pilot removes 99 parent proteins from a 1,901-protein
+index and defines relevance using low-frequency shared GO terms plus index-side
+GOA citations. At candidate top-50 / paper top-200, ProtT5 reaches paper
+Hit/Recall `0.465/0.248`, versus ESM-2 `0.364/0.203`, BLAST `0.242/0.135`, and
+k-mer Jaccard `0.313/0.147`. The split has zero exact-accession and full-sequence
+substring overlap, but family-cluster holdout remains required before making a
+strong biological generalization claim.
+
+The final application evaluation uses 33 development and 66 frozen test
+queries. Graph-IDF improves budget-matched function/literature F1 from
+`0.071/0.085` to `0.100/0.100`. Qwen2.5-7B-Instruct then executes all 198
+structured test answers with GO/PMID evidence-selection F1 `0.985/1.000`, typed
+citation entailment `1.000`, no identifier outside the supplied pack, and
+correct abstention for every mechanism question. This is a structured evidence
+execution result, not a free-form biomedical reasoning claim. See
+[`reports/agent_sequence_literature_application_eval.md`](reports/agent_sequence_literature_application_eval.md)
+for the protocol, bootstrap intervals, retrieval ceiling, and claim boundary.
 
 For paper-scale sequence retrieval experiments on a 96 GB GPU, use the BF16
 merged CPT checkpoint as the main model:

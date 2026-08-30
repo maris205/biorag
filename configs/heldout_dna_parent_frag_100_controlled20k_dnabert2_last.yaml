@@ -14,7 +14,7 @@ kb:
 embedding:
   model: zhihan1996/DNABERT-2-117M
   pooling: last
-  dtype: bf16
+  dtype: fp32
   batch_size: 64
 
 retrieval:

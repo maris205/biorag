@@ -11,6 +11,24 @@ RAG/DRAG evidence layer. Classical biological search remains part of the system:
 BLAST, SQL/FTS, and curated graph edges provide high-precision evidence where
 their assumptions fit the query.
 
+The strongest new direction is sequence-conditioned literature discovery. Plain
+literature RAG and paper citation DAGs are already common; BioRAG-DRAG should
+instead show that a protein sequence can be the entry point into literature
+evidence. Sequence candidates connect to curated UniProt annotations,
+GO/domain/family/pathway nodes, and PubMed references through an auditable
+evidence-DAG view. This turns the graph from a generic paper DAG into a
+biological sequence-to-literature resource that can be released and updated
+publicly.
+
+The current held-out application result makes this claim executable rather than
+conceptual. A 2k Swiss-Prot/GOA/PubMed DAG yields 99 leakage-controlled queries;
+Graph-IDF is tuned on 33 and frozen on 66, after which a local instruction model
+produces citation-bounded GO/PMID answers. The main positive result is reliable
+evidence execution and abstention, while the main negative result is that
+retrieval and compact paper selection still limit answer recall. This should be
+presented as a structured Agent evidence benchmark, not as free-form biological
+reasoning or mechanism discovery.
+
 The motivation is engineering-first: local biomedical agents need one evidence
 interface that can retrieve across tools and modalities. The scientific question
 comes after that engineering choice: once biological sequences, text, and later
@@ -33,12 +51,22 @@ The sequence-vector layer has a different role:
 - support mixed natural-language and biological-sequence queries
 - seed DRAG graphs that can connect sequences to annotations, papers, entities,
   and later structures or images
+- retrieve papers from raw protein sequences through curated
+  sequence-to-annotation-to-literature evidence paths
 - expose biological neighborhoods for agent workflows where exact alignment is
   only one part of the reasoning chain
 
 For sequence-only exact-fragment tasks, matching BLAST within a reasonable gap is
 enough to show the representation is usable. The stronger claim should come from
 unified retrieval, cross-modal evidence assembly, and graph/agent improvements.
+
+Existing held-out protein fragment results support a model-agnostic sequence
+entry layer rather than an OmniGene-only claim: ProtT5 mean pooling reaches
+protein biological Hit@10/MRR `0.7780/0.7158`, ESM-2 mean reaches
+`0.6560/0.5764`, and OmniGene mean reaches `0.3120/0.2623`. This makes
+specialized protein embeddings natural defaults for protein sequence partitions,
+while OmniGene remains valuable as a unified biological-language backbone for
+mixed sequence/text agent contexts.
 
 ## Engineering Performance Claim
 
@@ -121,6 +149,8 @@ agent answer grounding with and without each view.
 - Hybrid BioRAG keeps classical precision and adds cross-modal recall.
 - Text-style DRAG over sequence embeddings forms non-random biological
   neighborhoods.
+- Sequence-conditioned evidence DAGs can retrieve curated literature from raw
+  protein sequences through protein, annotation, and paper paths.
 - Multi-view DRAG improves agent evidence grounding and multi-hop biological
   reasoning compared with single-view RAG.
 - GPU-backed ANN search improves batched retrieval throughput for agent

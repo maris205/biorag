@@ -1,0 +1,12 @@
+kb:
+  root: /autodl-fs/data/open-rosalind-kb/standard
+  raw_dir: /autodl-fs/data/open-rosalind-kb/standard/raw
+  index_dir: /autodl-fs/data/open-rosalind-kb/standard/index
+  sqlite_path: /autodl-fs/data/open-rosalind-kb/standard/index/open_rosalind_standard.sqlite
+  manifest_path: /autodl-fs/data/open-rosalind-kb/standard/index/manifest.json
+  blast_db: /autodl-fs/data/open-rosalind-kb/standard/index/blast/swissprot
+  blast_fasta: /autodl-fs/data/open-rosalind-kb/standard/index/blast/swissprot.fasta
+  blastn_db: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna
+  blastn_fasta: /autodl-fs/data/open-rosalind-kb/standard/index/blast/ensembl_cdna.fasta
+  graph_dir: indexes/seq_lit_dag_swissprot_sample/graph
+  vector_dir: indexes/seq_lit_dag_swissprot_sample/vector

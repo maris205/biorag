@@ -4,6 +4,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .venv/
+.venv-*/
 venv/
 build/
 dist/
@@ -30,6 +31,12 @@ reports/**/*.svg
 reports/traces/
 reports/figures/*.html
 reports/figures/*.svg
+/reports/results/
+
+# Intermediate Agent prompt/selector sweeps. Final selected reports are tracked.
+/reports/agent_evidence_eval*.md
+/reports/agent_graph_selector*.md
+/reports/agent_qa_*.md
 
 # LaTeX build artifacts
 paper/*.aux
@@ -38,8 +45,11 @@ paper/*.out
 paper/*.toc
 paper/*.fls
 paper/*.fdb_latexmk
+paper/*.bbl
+paper/*.blg
 
 # Downloaded upstream/reference material kept in this workspace
 /open-rosalind/
 /omnigene4/
 /*.pdf
+/index.html*

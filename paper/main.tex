@@ -13,6 +13,7 @@
 \usepackage{caption}
 \usepackage{amsmath}
 \usepackage{microtype}
+\usepackage{placeins}
 
 \hypersetup{
   colorlinks=true,
@@ -28,7 +29,7 @@
 \setlist[enumerate]{leftmargin=1.5em,itemsep=0.15em,topsep=0.25em}
 \captionsetup{font=small,labelfont=bf}
 
-\title{\textbf{BioRAG-DRAG: A Multimodal Biological Retrieval Layer for Local-First Biomedical Agents}}
+\title{\textbf{BioRAG-DRAG: Multimodal Sequence-to-Literature Evidence for Local-First Biomedical Agents}}
 \author{
 Liang Wang\thanks{Correspondence: \texttt{wangliang.f@gmail.com}.}\\
 School of Artificial Intelligence and Automation\\
@@ -42,9 +43,9 @@ Huazhong University of Science and Technology\\
 \maketitle
 
 \begin{abstract}
-Biomedical agents need reliable access to heterogeneous evidence: literature text, gene and pathway records, protein sequences, DNA/cDNA sequences, and structured biological relations. Classical sequence tools such as BLAST remain the right choice for alignment-grounded verification, but they are not a unified context interface for large language model agents. We present \textbf{BioRAG-DRAG}, a local-first multimodal retrieval layer that combines pluggable neural sequence-text retrieval, BLAST verification, and graph-based evidence packaging. Specialized encoders such as ESM-2 can serve protein partitions, while OmniGene CPT provides a unified biological-language backbone for mixed sequence/text and agent-facing use; BLAST reranks or verifies sequence candidates; and DRAG graphs expose typed, traceable paths for downstream agents.
+Biomedical agents need an auditable route from heterogeneous queries to biological evidence, yet ordinary text retrieval-augmented generation does not preserve the alignment semantics of DNA or protein search, while BLAST does not provide a shared context interface. We present \textbf{BioRAG-DRAG}, a local-first multimodal retrieval layer that combines partition-specific neural encoders, BLAST verification, and typed graph evidence. BioRAG-Standard v0 exports 257,886 text, DNA/cDNA, protein, and mixed records with an initial engineering annotation layer. The architecture treats vector retrieval as a coarse candidate and context route rather than a replacement for alignment search.
 
-We introduce \textbf{BioRAG-Standard v0}, a partitioned corpus/library with 257,886 retrievable records and an initial annotation layer for engineering evaluation built from Open-Rosalind Standard biomedical records and sequence-window extensions. On an in-index sequence-window stress test, BLAST nearly saturates biological matching, while vector retrieval recovers substantial but lower biological match rates. On held-out parent-fragment controls, public protein encoders outperform the current OmniGene protein-window embedding, while DNA/cDNA dense retrieval remains weak even with off-the-shelf Nucleotide Transformer pooling; this supports a model-agnostic BioRAG design rather than a claim that one unified generator backbone is the best sequence-search encoder. Indexed Chroma lookup over Standard text and 100k sequence-window collections adds only small lookup overhead after query embedding; this does not measure end-to-end instant latency. Finally, exploratory sequence DRAG traces show inspectable biological neighborhoods, including immunoglobulin-family and gene-symbol modules, with initial graph controls indicating non-random but partly sequence-similarity-driven structure. These results support a bounded architecture: vector retrieval supplies unified candidate context, while BLAST and DRAG provide biological verification and evidence attribution.
+On an in-index sequence-window stress test, vector retrieval recovers substantial but lower biological match than BLAST. Held-out parent controls select ProtT5 for protein partitions and DNABERT-2 for the auxiliary DNA candidate route, while BLAST remains stronger for verification. We then build a 2,000-protein SeqLit-DAG linking sequence candidates to GO/GOA and PubMed evidence. On an accession-masked 33/66 development/test split, a frozen Graph-IDF selector raises mean function and literature F1 over a budget-matched rank-first selector from 0.071 to 0.100 and from 0.085 to 0.100. Qwen2.5-7B-Instruct executes the 66 test packs with GO/PMID evidence-selection F1 of 0.985/1.000, citation entailment of 1.000, zero out-of-pack identifier hallucination, and correct abstention whenever mechanism evidence is absent. These structured tasks do not establish free-form biomedical reasoning or mechanism discovery; they demonstrate a reproducible sequence-to-literature evidence interface for local agents.
 \end{abstract}
 
 \section{Introduction}
@@ -68,7 +69,7 @@ $\rightarrow$ local-first agent answer with citations and retrieval traces
 
 This design separates three roles. First, vector retrieval provides a shared interface over text, DNA/cDNA, protein, and mixed records, while allowing different partitions to use different embedding models. Second, BLAST remains the biological alignment route for verification and reranking. Third, DRAG turns retrieval results into graph evidence that an agent can inspect, cite, and expand. The system is therefore complementary to BLAST rather than competitive with it.
 
-The current empirical result supports this division as an engineering validation rather than a held-out homology benchmark. On the BioRAG-Standard v0 sequence-window stress test, vector retrieval is not as strong as full-database BLAST for alignment-grounded sequence verification, but it often places a biologically matched parent within a 200-candidate pool for downstream alignment-based verification. Held-out parent-fragment controls further show that protein-specialized ESM-2 and ProtT5 embeddings are stronger than the current OmniGene protein-window embedding, while the DNA/cDNA partition remains difficult for off-the-shelf dense pooling. These results reinforce the system claim: BioRAG should route partitions to appropriate encoders while preserving a unified agent evidence interface.
+The current empirical result supports this division as an engineering validation rather than a held-out homology benchmark. On the BioRAG-Standard v0 sequence-window stress test, vector retrieval is not as strong as full-database BLAST for alignment-grounded sequence verification, but it often places a biologically matched parent within a 200-candidate pool for downstream alignment-based verification. Held-out parent-fragment controls further show that protein-specialized ESM-2 and ProtT5 embeddings are stronger than the current OmniGene protein-window embedding, while a DNA-specific DNABERT-2 mean-pooling encoder provides a better candidate layer than the unified DNA control. The DNA route remains below BLASTN. A separate held-out SeqLit-DAG experiment then tests the application-level claim: whether a raw protein sequence can lead to compact, typed function and paper evidence that a local instruction model can cite without leaving the retrieved pack.
 
 \begin{figure}[t]
     \centering
@@ -82,7 +83,7 @@ This paper makes four contributions:
   \item \textbf{A reproducible local corpus/library export.} We build BioRAG-Standard v0 from Open-Rosalind Standard data and sequence-window extensions, yielding 257,886 corpus records and an initial annotation layer for engineering evaluation.
   \item \textbf{A local-first hybrid retrieval architecture.} We implement vector coarse retrieval, BLAST verification, and DRAG graph packaging over Standard biomedical text, protein windows, DNA/cDNA windows, and mixed records.
   \item \textbf{A retrieval and engineering evaluation.} We compare BLAST, vector retrieval, vector reranking, combined vector+BLAST evidence routes, held-out protein embedding baselines with ESM-2 and ProtT5, and an initial public DNA encoder control; we also decompose indexed lookup and verified-route latency.
-  \item \textbf{An exploratory DRAG evidence analysis.} We visualize typed sequence evidence traces and report biological-structure signals as hypothesis-generating results, with parent-collapse, k-mer graph, and degree-preserving null controls used to bound the interpretation.
+  \item \textbf{A sequence-to-literature Agent application.} We release a typed protein-to-GO/GOA-to-PubMed DAG view, evaluate a development/test-frozen evidence selector and local instruction model, and retain biological graph analysis as an explicitly exploratory result bounded by parent-collapse, k-mer, and degree-preserving null controls.
 \end{enumerate}
 
 \section{Related Work}
@@ -178,7 +179,7 @@ This shared substrate makes ablations cleaner: removing DNA, protein, text, grap
 
 Records are typed before embedding or indexing. Examples include Standard biomedical text, protein sequence windows, DNA/cDNA sequence windows, and mixed English/sequence records. For sequence-window retrieval, the document body is the biological sequence itself, while metadata carries the parent accession and source information. This avoids embedding long header-heavy FASTA records as single documents and improves fragment retrieval.
 
-The embedding layer is partitioned and pluggable. The main BioRAG-Standard sequence-window stress test uses the full merged OmniGene CPT model in BF16 so that DNA, protein, mixed sequence/text, and agent-facing biological-language inputs share one representation backbone. For protein-only held-out controls, we also build public ESM-2 and ProtT5 sequence-window indexes; for DNA/cDNA, we add an off-the-shelf Nucleotide Transformer 500M control. Embeddings are computed from the final hidden layer using attention-mask mean pooling over token hidden states followed by L2 normalization, not from next-token prediction logits. We also run last-token pooling or CLS-token pooling where supported as ablations. Windows use a size of 128 and stride of 64. The Chroma collections contain 100,000 DNA/cDNA windows and 100,000 protein windows for the main stress test; the controlled20k held-out protein control expands to 112,808 protein windows, and the controlled100k ProtT5 protein control expands to 589,210 windows.
+The embedding layer is partitioned and pluggable. The main BioRAG-Standard sequence-window stress test uses the full merged OmniGene CPT model in BF16 so that DNA, protein, mixed sequence/text, and agent-facing biological-language inputs share one representation backbone. For protein-only held-out controls, we also build public ESM-2 and ProtT5 sequence-window indexes; for DNA/cDNA, we compare Nucleotide Transformer 500M, DNABERT-S, and DNABERT-2. Embeddings are computed from the final hidden layer using attention-mask mean pooling over token hidden states followed by L2 normalization, not from next-token prediction logits. We also run last-token pooling, CLS-token pooling, and reverse-complement averaging where supported as ablations. The main controlled DNA result uses DNABERT-2 mean pooling with 256-nucleotide windows and stride 128; 128/64 is retained as a window ablation. The Chroma collections contain 100,000 DNA/cDNA windows and 100,000 protein windows for the main stress test; the controlled20k held-out protein control expands to 112,808 protein windows, and the controlled100k ProtT5 protein control expands to 589,210 windows.
 
 \subsection{Vector Coarse Retrieval}
 
@@ -215,6 +216,23 @@ DRAG graphs convert retrieved records and relations into graph evidence. We buil
   \item \textbf{hybrid graph:} vector and BLAST edges are merged while preserving edge types.
 \end{itemize}
 The vector-only graph deliberately follows a method-agnostic text-RAG recipe: records become nodes, nearest-neighbor retrieval creates edges, and biological labels are used only for downstream analysis. This lets us test whether biological structure emerges before explicit biological rules are added.
+
+\subsection{Sequence-to-Literature DAG and Agent Contract}
+
+The application DAG uses curated identifiers rather than extracting claims from paper prose. Its typed path is
+\[
+q_{\mathrm{seq}} \rightarrow p_{\mathrm{candidate}} \rightarrow g_{\mathrm{GO/GOA}} \rightarrow d_{\mathrm{PMID}} \rightarrow a_{\mathrm{agent}}.
+\]
+The 2k resource contains 2,000 Swiss-Prot proteins, 12,858 GO annotations, 4,304 PMIDs, and 63,651 typed edges. From this resource we construct a function-to-paper split with 99 held-out protein accessions and 1,901 index proteins. Held-out accessions and full-sequence substrings have zero index overlap. Relevance is defined by low-frequency shared GO terms with index-side curated GOA paper evidence, so the task measures recovery of traceable annotation and literature paths, not direct experimental validation of a new query protein.
+
+For executable evidence selection, Graph-IDF scores a claim using candidate rank, corpus GO document frequency, and typed GO-to-PMID support. Hyperparameters are selected on a deterministic 33-query development split and frozen on 66 test queries. The downstream generator is Qwen2.5-7B-Instruct~\cite{qwen2025qwen25}, kept separate from the biological retrieval encoder. Prompts mask the held-out accession and expose only typed evidence identifiers. Function and literature questions require copied GO or PMID identifiers with citations; mechanism questions require explicit abstention because no mechanism-level evidence is supplied.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/fig7_seq_lit_dag.pdf}
+    \caption{BioRAG-SeqLit-DAG application path. A held-out protein sequence retrieves candidate proteins, traverses curated GO/GOA-to-PubMed relations, and is compressed by a Graph-IDF selector into a citation-bounded Agent evidence pack. Typed identifiers limit valid claims, while absent mechanism evidence triggers abstention.}
+    \label{fig:seq-lit-dag}
+\end{figure}
 
 \section{Experiments}
 
@@ -300,7 +318,7 @@ We also construct a 100-query DNA/cDNA parent-fragment control from Ensembl cDNA
 
 \begin{table}[t]
 \centering
-\caption{Held-out DNA/cDNA parent-fragment control. BLASTN is the alignment-grounded reference. Vector rows use top-200 Chroma retrieval; the Nucleotide Transformer row indexes the full controlled20k window set.}
+\caption{Held-out DNA/cDNA parent-fragment control. BLASTN is the alignment-grounded reference. Vector rows use top-200 parent collapse on the controlled20k window set; latency is reported by the corresponding evaluator and is not a cold-start measurement.}
 \label{tab:dna_baselines}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lrrrr}
@@ -310,12 +328,18 @@ Method & Index setting & Biological Hit@10 & Biological MRR & Mean latency \\
 BLASTN & controlled20k cDNA & 0.9100 & 0.9100 & 94.7 ms \\
 OmniGene-4-CPT BF16 mean & controlled20k windows & 0.1000 & 0.0795 & 1049.0 ms \\
 Nucleotide Transformer 500M mean & full controlled20k windows & 0.0100 & 0.0021 & 992.5 ms \\
+DNABERT-S mean & controlled20k windows, 128/64 & 0.1200 & 0.1020 & 12.6 ms \\
+DNABERT-S mean + RC average & controlled20k windows, 128/64 & 0.1200 & 0.1090 & 12.8 ms \\
+DNABERT-2 mean & controlled20k windows, 128/64 & 0.1700 & 0.1481 & 7.4 ms \\
+DNABERT-2 mean & controlled20k windows, 256/128 & 0.2500 & 0.2347 & 10.9 ms \\
+DNABERT-2 last & controlled20k windows, 128/64 & 0.0200 & 0.0171 & 11.9 ms \\
+DNA-ESM2-style 117M MLM mean & controlled20k windows, 256/128 & 0.2300 & 0.1687 & n/r \\
 BLASTN & full local cDNA & 0.9100 & 0.9100 & 328.3 ms \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-This DNA result is intentionally reported because it prevents overclaiming. The current OmniGene sequence-window embedding is weak on this DNA-only transcript-fragment retrieval control, whereas BLASTN remains strong. Nucleotide Transformer 500M does not improve the result under off-the-shelf mean pooling, and a smaller 20k-window CLS-pooling smoke run also remains low at 0.0300/0.0090 Bio Hit@10/MRR. We therefore do not conclude that dense DNA retrieval is solved by simply swapping in a genomic foundation model. The result reinforces the central system design: BioRAG should keep a unified evidence interface while allowing the DNA partition to use retrieval-specific genomic encoders, fine-tuning, or alignment verification.
+This DNA result is intentionally reported because it prevents overclaiming. DNABERT-2 mean pooling with 256/128 windows is the strongest tested dense DNA route, but remains well below BLASTN on the alignment-grounded reference. A scratch-trained DNA-ESM2-style 117M MLM encoder reaches 0.2300/0.1687 Bio Hit@10/MRR, close to but below DNABERT-2, so simply increasing model size or using an ESM-style architecture is not sufficient. DNABERT-2 improves over the OmniGene control and the weaker Nucleotide Transformer control, while last-token pooling collapses and reverse-complement averaging does not improve the primary Hit@10 result. We therefore do not conclude that dense DNA retrieval replaces alignment search. The result reinforces the central system design: BioRAG should keep a unified evidence interface while allowing the DNA partition to use retrieval-specific genomic encoders, fine-tuning, or alignment verification.
 
 \begin{figure}[t]
     \centering
@@ -342,11 +366,21 @@ BLAST top-10 & n/a & 294.5684 ms & 1081.9300 ms & local BLAST \\
 Hybrid graph expansion & n/a & 0.3540 ms & 0.3254 ms & SQLite graph expansion \\
 Verified vector+BLAST+graph & n/a & 300.8221 ms & 1088.8706 ms & median route-latency sum \\
 FAISS CPU lookup, IndexFlatIP & 8.3346 ms & 15.4626 ms & 15.6090 ms & flat top-10 lookup \\
+FAISS GPU lookup, DNA controlled20k & n/a & 0.003868 ms & n/a & top-200, 10k in-index queries \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-These results support a \textbf{lookup/verified} product design. After a query embedding is available from a resident embedding service, vector lookup adds only a small indexed-search overhead; in verified mode, BLAST and DRAG add biological grounding and evidence attribution. We do not report end-to-end instant latency here because query embedding time is excluded. The current FAISS GPU wheel detects the RTX PRO 6000 Blackwell GPU but lacks compatible \texttt{sm\_120} kernels; GPU lookup is therefore left as an engineering follow-up rather than a reported result.
+These results support a \textbf{lookup/verified} product design. After a query embedding is available from a resident embedding service, vector lookup adds only a small indexed-search overhead; in verified mode, BLAST and DRAG add biological grounding and evidence attribution. We do not report end-to-end instant latency here because query embedding time is excluded. The current Chroma measurements are therefore complemented by a separate controlled DNA backend microbenchmark below.
+
+As a separate controlled DNA backend microbenchmark, we replay 10,000 sampled
+resident vectors against the 20,000-vector DNABERT-2 mean collection at
+top-200. Chroma, FAISS CPU, and FAISS GPU require 2.2972, 1.9210, and
+0.003868~ms/query, respectively (435, 521, and 258,502 queries/s). These
+measurements exclude query embedding, host-service overhead, BLASTN, graph
+expansion, and generation; they establish the serving direction for an instant
+candidate layer rather than an end-to-end speed claim. The full protocol and
+JSON artifacts are provided in the supplementary reproducibility report.
 
 \begin{figure}[t]
     \centering
@@ -432,6 +466,70 @@ yfbR & Protein & 11.3 & 12.0 & 10.3 & BLAST 15; vector 21 \\
 
 Table~\ref{tab:agent_case} shows the operational distinction between retrieval routes. For the \texttt{IGKV2-40} case, the hybrid pack contains BLAST-supported cDNA neighbors with 100\% identity as well as high-score vector neighbors from the same immunoglobulin family. For the protein \texttt{pgl} and \texttt{yfbR} cases, vector traces recover broad same-label neighborhoods, while BLAST edges provide alignment-labeled support for citation. The resulting answer skeleton is deliberately conservative: the agent may describe the retrieved neighborhood and cite whether each edge is vector-derived or BLAST-derived, but it should not infer function, mechanism, clinical relevance, or experimental conclusions unless annotation, pathway, domain, or literature evidence is also retrieved.
 
+\subsection{Held-Out Agent Evidence Evaluation}
+
+The case studies above demonstrate the evidence format, but do not quantify held-out behavior. We first evaluate the deterministic evidence-pack contract on all 99 sequence-to-function-to-literature queries. For each ranked result, the evaluator materializes at most 50 protein candidates and 20 papers, together with GO annotations and typed protein-to-GO-to-PMID paths. Table~\ref{tab:agent_evidence_eval} uses full stored top-50 rankings for every method; this avoids giving methods different effective candidate budgets.
+
+\begin{table}[t]
+\centering
+\caption{Budget-matched deterministic evidence evaluation on the 99-query SeqLit-DAG split. GO bridge recall measures expected GO coverage; strict path requires a typed candidate-to-GO-to-expected-PMID route.}
+\label{tab:agent_evidence_eval}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & Candidate hit & Candidate recall & GO bridge recall & Citation hit & Strict path & Citation precision \\
+\midrule
+Random & 0.061 & 0.027 & 0.045 & 0.000 & 0.000 & 0.000 \\
+k-mer Jaccard & 0.313 & 0.127 & 0.248 & 0.152 & 0.152 & 0.017 \\
+BLASTP & 0.242 & 0.124 & 0.194 & 0.222 & 0.222 & 0.026 \\
+ESM-2 mean & 0.364 & 0.181 & 0.301 & 0.202 & 0.202 & 0.021 \\
+ProtT5 mean & \textbf{0.465} & \textbf{0.225} & \textbf{0.368} & 0.253 & 0.253 & 0.027 \\
+ProtT5+BLAST RRF & 0.444 & 0.220 & 0.353 & \textbf{0.263} & \textbf{0.263} & \textbf{0.027} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+ProtT5 gives the strongest candidate and GO coverage. Reciprocal-rank fusion with BLAST lowers candidate hit by 0.020 but raises the strict typed-path rate by 0.010, so fusion is complementary at the citation path rather than uniformly superior. BLAST alone remains competitive for paper support despite lower candidate coverage.
+
+We next tune Graph-IDF only on 33 development queries and freeze it on the remaining 66. The selected configuration uses the first five protein candidates, IDF power 1.0, and three output claims. Table~\ref{tab:agent_selector_eval} compares it with a rank-first selector at the same output budget. Paired query bootstrap intervals for the Graph-IDF F1 gain are $[0.006,0.057]$ for function and $[0.000,0.034]$ for literature.
+
+\begin{table}[t]
+\centering
+\caption{Frozen selector results on 66 accession-masked test queries. The retrieval oracle measures whether a correct identifier exists in the available pack and is not executable.}
+\label{tab:agent_selector_eval}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & Function F1 & Function hit & Literature F1 & Literature hit & $\Delta$F1 function & $\Delta$F1 literature \\
+\midrule
+Rank-first, matched budget & 0.071 & 0.152 & 0.085 & 0.197 & -- & -- \\
+Graph-IDF & \textbf{0.100} & \textbf{0.212} & \textbf{0.100} & \textbf{0.227} & +0.029 & +0.015 \\
+Retrieval oracle & 0.431 & 0.515 & 0.153 & 0.258 & -- & -- \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Finally, Qwen2.5-7B-Instruct executes three structured questions for every frozen test pack: supported GO terms, supported PMIDs, and whether mechanism evidence is sufficient. Table~\ref{tab:generated_agent_eval} separates end-to-end label F1 from evidence selection and citation entailment. All 198 outputs satisfy the two-line format and bracketed citation syntax. Three function outputs choose a later valid GO item instead of the requested third Graph-IDF item; these frozen errors produce selection F1 0.985. No output introduces a GO ID, PMID, or citation outside its pack, and all mechanism prompts correctly abstain.
+
+\begin{table}[t]
+\centering
+\caption{Generated Agent evaluation on 66 held-out queries. Entailment checks whether every cited identifier is supported by its typed evidence edge. Hallucination is the rate of identifiers outside the supplied pack.}
+\label{tab:generated_agent_eval}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrr}
+\toprule
+QA type & Answer F1 & Retrievable F1 & Selection F1 & Citation valid & Entailment & Hallucination & Correct abstention \\
+\midrule
+Function & 0.100 & 0.111 & 0.985 & 1.000 & 1.000 & 0.000 & -- \\
+Literature & 0.100 & 0.138 & 1.000 & 1.000 & 1.000 & 0.000 & -- \\
+Mechanism & -- & -- & -- & 1.000 & 1.000 & 0.000 & 1.000 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Generation uses BF16 and peaks at 14.35~GiB, so the experiment fits a 32~GB GPU. Model load takes 5.43~s; resident-model generation averages 607~ms per answer at 74.75 generated tokens/s. These values measure constrained evidence execution, not interactive retrieval plus embedding latency. The low answer F1 relative to citation reliability also identifies the next bottleneck: increasing retrieval and compact-selector coverage without admitting a noisy paper pool. Expanding the paper budget from 20 to 200 doubles the test literature-oracle hit from 0.258 to 0.515, but does not improve the current selector, demonstrating that unfiltered graph expansion raises both ceiling and noise.
+
+\FloatBarrier
 \section{Discussion}
 
 \subsection{Why Vector Retrieval Matters Even When BLAST Is Stronger}
@@ -440,7 +538,7 @@ BLAST is stronger for alignment-grounded verification and should remain the base
 
 \subsection{Lookup and Verified Retrieval Modes}
 
-The latency results motivate two operating modes. Lookup mode returns vector-only context after query embedding and is useful for rapid local evidence preview. Verified mode runs BLAST and DRAG expansion to attach biologically grounded evidence. This design fits biomedical agents: the user can receive provisional context from a unified local index, while the system appends verified evidence when the slower routes finish. A full end-to-end latency claim requires warm embedding measurements and is left for the next experimental pass.
+The latency results motivate two operating modes. Lookup mode returns vector-only context after query embedding and is useful for rapid local evidence preview. Verified mode runs BLAST and DRAG expansion to attach biologically grounded evidence. This design fits biomedical agents: the user can receive provisional context from a unified local index, while the system appends verified evidence when the slower routes finish. The DNA matrix now reports query embedding plus lookup latency for DNABERT-2; the older Chroma stress-test measurements remain separately labeled and do not include model cold start.
 
 \subsection{DRAG as a Biological Representation Probe}
 
@@ -448,25 +546,25 @@ The graph results suggest that sequence-vector neighborhoods may contain biologi
 
 \section{Limitations}
 
-BioRAG-Standard v0 is still a first version. The current tasks emphasize lookup and sequence-fragment retrieval, and the main 100-query sequence test uses fragments or perturbations from indexed parent sequences. It should therefore be interpreted as a local workflow stress test rather than a held-out biological homology benchmark. Multi-hop sequence-to-function, sequence-to-pathway, and literature-grounded tasks are needed for stronger agent evaluation. The mixed partition is small and should be expanded with abstracts, UniProt function text, pathway descriptions, and sequence snippets.
+BioRAG-Standard v0 is still a first version. The main 100-query sequence test uses fragments or perturbations from indexed parent sequences and should therefore be interpreted as a local workflow stress test rather than a held-out biological homology benchmark. The SeqLit-DAG application adds a leakage-controlled held-out path task, but it contains only 99 human protein queries sampled from a 2k graph. Relevance is defined by low-frequency shared GO labels and index-side GOA papers; those papers are traceable function-linked evidence, not automatically direct experimental support for the held-out protein. The exact-identifier, two-line Agent task is auditable but substantially narrower than free-form biomedical QA, which still requires expert review and broader datasets. The mixed partition should also be expanded with abstracts, UniProt function text, pathway descriptions, and sequence snippets.
 
-The current vector reranker is lightweight and heuristic, and candidate-subset BLAST reranking is limited by whether the vector candidate pool contains the correct or biologically equivalent parent sequence. A preliminary graph-expanded retrieval ablation used 10k view graphs rather than a full 100k or complete sequence graph; it added graph candidates but did not improve recall beyond the vector seed pool, so it is treated as a coverage-limited result rather than a central claim. FAISS GPU lookup is not reported because the available wheel lacks Blackwell-compatible kernels on the current RTX PRO 6000 machine. Functional and literature enrichment coverage depends on local UniProt/NCBI/HGNC mappings; Pfam or InterPro domain enrichment and title-level literature case studies would strengthen biological interpretation.
+The current vector reranker is lightweight and heuristic, and candidate-subset BLAST reranking is limited by whether the vector candidate pool contains the correct or biologically equivalent parent sequence. A preliminary graph-expanded retrieval ablation used 10k view graphs rather than a full 100k or complete sequence graph; it added graph candidates but did not improve recall beyond the vector seed pool, so it is treated as a coverage-limited result rather than a central claim. FAISS GPU lookup is now measured on an RTX 4080 SUPER for the controlled20k DNA collection, but this remains a lookup-only microbenchmark rather than a production throughput result; larger-scale serving and concurrency are still pending. Functional and literature enrichment coverage depends on local UniProt/NCBI/HGNC mappings; Pfam or InterPro domain enrichment and title-level literature case studies would strengthen biological interpretation.
 
-The embedding comparison is still incomplete. We added ESM-2 and ProtT5 protein baselines plus a mean-vs-last pooling ablation, and we added an initial DNA/cDNA held-out transcript-fragment control with Nucleotide Transformer 500M as a public DNA encoder control. However, newer ESM-family checkpoints and original Gemma4 MoE controls remain to be evaluated, and DNABERT-2 is currently blocked by custom-model compatibility issues under the installed Transformers/Torch environment; it should be rerun in a pinned Transformers 4.x environment before submission if DNA public baselines become central. The current DNA control suggests that neither OmniGene nor off-the-shelf Nucleotide Transformer pooling should be treated as a strong DNA-only retriever in this setting. This separates the contribution of the unified BioRAG system from the contribution of biological tokenization, continued pretraining, and partition-specialized encoders. The BLAST side of the Swiss-Prot scale curve and the controlled100k/300k ProtT5 vector/candidate-BLAST points are now measured, but full-scale vector indexes, FAISS/Milvus-style optimized serving, and candidate-subset BLAST sweeps are still needed before claiming candidate-BLAST speed advantages.
+The core protein embedding comparison is complete for the current held-out controls: ProtT5 mean pooling is the selected protein-partition default, ESM-2 mean pooling is a lighter alternative, and OmniGene remains the unified mixed-modality backbone. We also added ESM-2 and ProtT5 mean-vs-last pooling ablations and Nucleotide Transformer, DNABERT-S, DNABERT-2, and DNA-ESM2-style DNA controls. DNABERT-2 mean pooling is the strongest tested DNA dense condition, but it remains an auxiliary candidate layer rather than a replacement for BLASTN. Larger held-out DNA/family splits and full-scale DNA vector indexes remain useful follow-ups, while original Gemma4 MoE controls are deferred until after the first review. This separates the contribution of the unified BioRAG system from the contribution of biological tokenization, continued pretraining, and partition-specialized encoders. The BLAST side of the Swiss-Prot scale curve and the controlled100k/300k ProtT5 vector/candidate-BLAST points are now measured, but a full-scale dense model comparison, FAISS/Milvus-style optimized serving, and candidate-subset BLAST sweeps are still needed before making full-corpus model or speed claims.
 
-The biological-meaning analysis should also be interpreted carefully. Community purity, GO/Reactome enrichment, and shared PubMed IDs show that DRAG neighborhoods are non-random and inspectable, but they do not prove causal mechanisms or validate novel wet-lab hypotheses. The appropriate use is hypothesis generation, evidence organization, and agent grounding. Biological claims that affect experimental design, diagnosis, treatment, or safety-critical decisions should still be verified by domain experts and specialized tools.
+The biological-meaning analysis should also be interpreted carefully. Community purity, GO/Reactome enrichment, and shared PubMed IDs show that DRAG neighborhoods are non-random and inspectable, but they do not prove causal mechanisms or validate novel wet-lab hypotheses. The generated Agent experiment checks structured identifier correctness and typed-edge citation entailment; it does not judge narrative biological reasoning. The appropriate use is hypothesis generation, evidence organization, and agent grounding. Biological claims that affect experimental design, diagnosis, treatment, or safety-critical decisions should still be verified by domain experts and specialized tools.
 
 \section{Reproducibility and Use Scope}
 
-The implementation is local-first and will be released at \texttt{https://github.com/maris205/biorag}. The corpus export lives under \texttt{data/biorag\_standard\_v0}; retrieval and graph reports are stored under \texttt{reports/}; and the main evaluation scripts are in \texttt{scripts/}. The main BioRAG sequence-vector experiments use the full OmniGene-4 CPT merged model in BF16, not the GGUF or 4-bit quantized variants, while the held-out protein baselines use ESM-2 and ProtT5 BF16 embeddings. The vector store is Chroma for the POC because it supports simple CRUD and collection management, while FAISS CPU is used as a lightweight lookup-speed reference. BLAST runs against local Swiss-Prot and Ensembl cDNA databases.
+The implementation is local-first and will be released at \texttt{https://github.com/maris205/biorag}. The corpus export lives under \texttt{data/biorag\_standard\_v0}; the SeqLit-DAG resources live under \texttt{data/seq\_lit\_dag\_*}; retrieval and graph reports are stored under \texttt{reports/}; and the main evaluation scripts are in \texttt{scripts/}. The main BioRAG sequence-vector experiments use the full OmniGene-4 CPT merged model in BF16, not the GGUF or 4-bit quantized variants, while held-out protein partitions use ESM-2 or ProtT5 BF16 embeddings and the DNA control uses DNABERT-2 mean pooling. The generated Agent study uses Qwen2.5-7B-Instruct BF16 as a separate instruction model; it does not use the biological embedding backbone as the answer generator. The vector store is Chroma for the POC because it supports simple CRUD and collection management, while FAISS CPU/GPU provide lookup-speed references. BLAST runs against local Swiss-Prot and Ensembl cDNA databases.
 
-The main reported commands are documented in \texttt{docs/REPRODUCIBILITY.md}, the evaluation notes, and the research matrix, including vector candidate-budget sweeps, vector-to-BLAST reranking, lookup/verified latency decomposition, DRAG graph construction, functional enrichment, and literature support analysis. The public repository tracks source code, benchmark task definitions, paper source, and compact result summaries; large local data files, model checkpoints, Chroma indexes, BLAST databases, and per-query JSON traces are regenerated from scripts rather than versioned. The reported vector lookup timings exclude model cold start, query embedding generation, LLM generation, and network calls. This choice isolates the indexed retrieval stage after embeddings are resident or precomputed.
+The main reported commands are documented in \texttt{docs/REPRODUCIBILITY.md}, the evaluation notes, and the research matrix, including vector candidate-budget sweeps, vector-to-BLAST reranking, lookup/verified latency decomposition, DRAG construction, SeqLit-DAG export, Graph-IDF selection, and generated Agent scoring. The public repository tracks source code, task definitions, paper source, and compact result summaries; large local data files, model checkpoints, Chroma indexes, BLAST databases, and per-query JSON traces are regenerated from scripts rather than versioned. The reported vector lookup timings exclude model cold start, query embedding generation, LLM generation, and network calls. Agent generation latency is reported separately with its model-load boundary.
 
 BioRAG-DRAG is intended for research and evidence organization, not autonomous biomedical decision-making. The system can help retrieve, rank, and package evidence for a human or an auditable agent workflow, but it should not be used as a standalone clinical or experimental authority. The design deliberately keeps BLAST, curated annotations, graph evidence, and literature traces visible so that downstream users can inspect which route supported each claim.
 
 \section{Conclusion}
 
-BioRAG-DRAG provides a unified local retrieval layer for biomedical agents by combining neural sequence-text retrieval, classical biological verification, and evidence graph expansion. The current results show that vector retrieval is useful as a coarse multimodal candidate layer in a local sequence-window workflow, while BLAST remains essential for alignment-grounded verification. Hybrid DRAG graphs preserve broad vector connectivity and add typed biological evidence paths, making the system better suited to agent workflows than any single retrieval route alone. This positions BioRAG-DRAG as a practical engineering foundation for local-first biomedical agents, with biological graph analysis offering a promising but still exploratory path toward stronger biological interpretation.
+BioRAG-DRAG provides a unified local retrieval layer for biomedical agents by combining neural sequence-text retrieval, classical biological verification, and typed evidence graph expansion. Vector retrieval is useful as a coarse multimodal candidate layer, while BLAST remains essential for alignment-grounded verification. The held-out SeqLit-DAG experiment adds an executable application: a protein sequence can lead to compact function and literature identifiers that a local instruction model cites without leaving the retrieved evidence pack and explicitly declines to turn into unsupported mechanism claims. This positions BioRAG-DRAG as a practical engineering foundation for local-first biomedical agents. Larger sequence-to-literature benchmarks, stronger evidence selectors, free-form expert evaluation, and controlled biological discovery studies remain necessary before broader scientific claims.
 
 \appendix
 \section{Candidate-BLAST Ablation}
@@ -701,6 +799,11 @@ Manuscript, 2026.
 L. Wang.
 OmniGene-4: a unified bio-language MoE model with router-level interpretability.
 Manuscript, 2026.
+
+\bibitem{qwen2025qwen25}
+Qwen Team, A. Yang, B. Yang, B. Zhang, B. Hui, and others.
+Qwen2.5 technical report.
+arXiv:2412.15115, 2025.
 
 \end{thebibliography}
 

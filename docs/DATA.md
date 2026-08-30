@@ -33,6 +33,51 @@ bash scripts/build_ensembl_cdna_blastn.sh
 
 ## Generated Outputs
 
+## BioRAG-SeqLit-DAG
+
+The next paper-facing data resource is a sequence-conditioned literature
+evidence DAG:
+
+```text
+protein sequence
+  -> UniProt protein / candidate homolog
+  -> GO, domain, family, pathway, gene, organism nodes
+  -> curated PubMed literature references
+```
+
+The first build should use curated public database links rather than extracting
+relations from paper text. This keeps the graph auditable and reproducible while
+making the retrieval task sequence-first instead of keyword-first.
+
+Planned v0 outputs:
+
+```text
+data/seq_lit_dag_swissprot_sample/
+  graph.sqlite
+  nodes.jsonl or nodes.parquet
+  edges.jsonl or edges.parquet
+  documents.jsonl
+  sample_queries.jsonl
+  manifest.json
+```
+
+The Chroma-ready `documents.jsonl` should include protein sequence records,
+annotation text records, paper title/abstract records, and mixed evidence-path
+records. The graph itself may contain cycles, but retrieval should expose a
+DAG-shaped evidence view such as:
+
+```text
+query_sequence -> protein_candidate -> GO/domain/family/pathway -> evidence -> paper
+```
+
+No GPU is needed for the initial Swiss-Prot sample schema, parsing, graph build,
+SQLite/Parquet export, or static figures. GPU is only needed when rebuilding
+large protein embedding indexes with ProtT5, ESM-2, OmniGene, or when testing
+FAISS GPU lookup.
+
+See `docs/SEQUENCE_LITERATURE_DAG_PLAN.md` for the full schema and experiment
+plan.
+
 ## BioRAG-Standard Dataset
 
 The current paper-facing annotated dataset is exported to:

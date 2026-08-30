@@ -23,10 +23,11 @@ toward a 2Q bioinformatics / biomedical AI systems submission.
   Hit@10/MRR 0.0100/0.0021, and a CLS-pooling 20k-window smoke run reaches
   0.0300/0.0090. Off-the-shelf pooling is therefore not sufficient for this
   cDNA transcript-fragment retrieval task.
-- DNABERT-2 was attempted but blocked by custom-model compatibility issues
-  under the current Transformers/Torch environment. Treat this as an
-  environment blocker, not a scientific result; rerun in a pinned Transformers
-  4.x environment if DNA public baselines become a submission blocker.
+- DNABERT-2 is now evaluated in an explicit compatibility backend using its
+  official custom classes. Mean pooling reaches Bio Hit@10/MRR 0.1700/0.1481
+  with 128/64 windows and 0.2500/0.2347 with 256/128 windows; last pooling is
+  0.0200/0.0171. The 256/128 mean condition is selected for the DNA candidate
+  layer, while BLASTN remains the alignment-grounded verifier.
 - The sequence-window candidate-budget sweep is complete. Vector top-200
   followed by candidate-subset BLAST reaches biological Hit@10/MRR
   0.9293/0.9293 and candidate biological recall 0.9596 on the 100-query
@@ -51,8 +52,8 @@ toward a 2Q bioinformatics / biomedical AI systems submission.
   0.8060/0.7442 at 1039.3 ms.
 - The paper now includes a candidate-budget table and a DNA/cDNA held-out
   control table. Remaining 2Q blockers are matching 100k/300k/full vector
-  indexes plus candidate-BLAST sweeps, a pinned-env DNABERT-2 run if needed,
-  original Gemma4 MoE control if available, and a real downstream
+  indexes plus candidate-BLAST sweeps, original Gemma4 MoE control if
+  available, and a real downstream
   answer-quality evaluation if targeting a stronger venue.
 
 ## Claim Map
@@ -61,7 +62,7 @@ toward a 2Q bioinformatics / biomedical AI systems submission.
 | --- | --- | --- |
 | Local BioRAG is useful for agent evidence packaging | Supported by system design, Chroma/BLAST/DRAG traces, and an agent-style evidence-pack case study | Add downstream answer-quality evaluation for stronger venues |
 | Dense retrieval is useful beyond in-index window recovery | Partially supported by controlled20k held-out parent-fragment results; BLAST remains stronger | Extend to full Swiss-Prot scale and DNA tasks |
-| OmniGene embeddings are meaningfully useful | Useful as unified biological-language backbone, but public protein encoders are stronger on current protein-only held-out retrieval; OmniGene is also weak on the current DNA held-out control, while NT 500M off-the-shelf pooling is weaker still | Compare original Gemma4 MoE, newer ESM-family protein encoders, and pinned-env DNABERT-2 for DNA |
+| OmniGene embeddings are meaningfully useful | Useful as unified biological-language backbone, but public protein encoders are stronger on current protein-only held-out retrieval; DNABERT-2 is stronger than OmniGene on the DNA-only control | Compare original Gemma4 MoE and newer ESM-family protein encoders; extend DNA to larger held-out/family splits |
 | Candidate-BLAST can be a systems route | BLAST scale reference is now measured at 20k/100k/300k/full; vector/candidate-BLAST scale points are pending | Build matching vector indexes and run candidate-BLAST sweeps before claiming speed advantages |
 | DRAG graph has biological meaning | Exploratory; parent-collapse and null controls are supportive, while k-mer controls explain part of the signal | Add larger parent-collapsed graphs plus GO/pathway/domain case studies before making biological-discovery claims |
 
@@ -91,8 +92,8 @@ toward a 2Q bioinformatics / biomedical AI systems submission.
   OmniGene, ESM-2, and ProtT5, supporting mean pooling as the default embedding
   mode for this sequence-window retrieval task.
 - DNA baselines: Nucleotide Transformer 500M completed with negative results;
-  DNABERT-2 needs a pinned environment because the current custom-model load is
-  incompatible with the installed stack.
+  DNABERT-S and DNABERT-2 are now completed, with DNABERT-2 mean selected for
+  the primary DNA candidate layer.
 - Compare: OmniGene-CPT vs original Gemma4 MoE vs public encoder embeddings
   under identical retrieval setup.
 - Success criterion:

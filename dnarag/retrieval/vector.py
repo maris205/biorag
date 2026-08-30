@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import importlib.util
 import json
 import math
 import os
 import re
 import sys
 import time
+import types
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -240,6 +242,8 @@ class HFEncoderEmbedder:
         elif self.input_format == "dna" and torch.cuda.is_available():
             self.model.to("cuda")
         self.model.eval()
+        if self.input_format == "dna" and selected_model_uses_legacy_flash(model_name):
+            _disable_legacy_flash_attention()
         self.dim = int(getattr(self.model.config, "hidden_size", 0) or 0)
 
     def embed(self, texts: list[str]) -> np.ndarray:
@@ -257,6 +261,90 @@ class HFEncoderEmbedder:
                 pooled = hidden[:, 0, :]
             elif self.pooling == "last":
                 pooled = _last_token_pool(hidden, token_mask, padding_side=self.tokenizer.padding_side)
+            else:
+                pooled = _mean_pool(hidden, mask)
+            pooled = torch.nn.functional.normalize(pooled.float(), p=2, dim=1)
+        return pooled.cpu().numpy().astype(np.float32)
+
+
+class DNABERT2Embedder:
+    """DNABERT-2 encoder loaded through its official custom model classes.
+
+    DNABERT-2 declares a custom ``BertConfig``/``BertModel`` pair that is not
+    compatible with newer AutoModel registration checks. Loading those classes
+    directly preserves all checkpoint weights while keeping the same pooling
+    contract as the other DNA encoders.
+    """
+
+    def __init__(
+        self,
+        model_name: str,
+        pooling: str = "mean",
+        dtype: str = "fp32",
+    ):
+        try:
+            import torch
+            from transformers import AutoTokenizer
+        except Exception as exc:
+            raise RuntimeError("Install vector dependencies to use the DNABERT-2 backend") from exc
+
+        self.torch = torch
+        self.pooling = _pooling_mode(pooling)
+        self.force_cpu = _env_bool("DNARAG_FORCE_CPU", False) or str(os.environ.get("DNARAG_HF_DEVICE") or "").lower() == "cpu"
+        resolved_model = _resolve_transformers_model_name(model_name)
+        local_only = _is_local_model_path(resolved_model)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            resolved_model,
+            local_files_only=local_only,
+            trust_remote_code=False,
+        )
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token or self.tokenizer.sep_token
+
+        config_cls, model_cls = _load_dnabert2_classes(resolved_model)
+        config = config_cls.from_pretrained(resolved_model, local_files_only=local_only)
+        if getattr(config, "pad_token_id", None) is None and self.tokenizer.pad_token_id is not None:
+            config.pad_token_id = int(self.tokenizer.pad_token_id)
+        _patch_dna_encoder_config_defaults(config)
+        self.model = model_cls.from_pretrained(
+            resolved_model,
+            config=config,
+            local_files_only=local_only,
+            add_pooling_layer=False,
+        )
+        _disable_legacy_flash_attention()
+        self.device = torch.device("cpu" if self.force_cpu or not torch.cuda.is_available() else "cuda")
+        self.model.to(self.device)
+        if dtype == "fp16" and self.device.type == "cuda":
+            self.model.to(dtype=torch.float16)
+        elif dtype == "bf16" and self.device.type == "cuda":
+            self.model.to(dtype=torch.bfloat16)
+        else:
+            self.model.to(dtype=torch.float32)
+        self.model.eval()
+        self.dim = int(getattr(self.model.config, "hidden_size", 0) or 0)
+
+    def embed(self, texts: list[str]) -> np.ndarray:
+        torch = self.torch
+        max_length = max(_env_int("DNARAG_EMBED_MAX_LENGTH", 512), 8)
+        prepared = [_prepare_encoder_input(text, "dna") for text in texts]
+        encoded = self.tokenizer(
+            prepared,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=max_length,
+        )
+        encoded = {key: value.to(self.device) for key, value in encoded.items()}
+        with torch.inference_mode():
+            output = self.model(**encoded, output_all_encoded_layers=False)
+            hidden = output[0] if isinstance(output, (tuple, list)) else output.last_hidden_state
+            token_mask = _encoder_pooling_mask(encoded, self.tokenizer).to(hidden.device)
+            mask = token_mask.unsqueeze(-1).to(hidden.dtype)
+            if self.pooling == "cls":
+                pooled = hidden[:, 0, :]
+            elif self.pooling == "last":
+                pooled = _last_token_pool(hidden, encoded["attention_mask"])
             else:
                 pooled = _mean_pool(hidden, mask)
             pooled = torch.nn.functional.normalize(pooled.float(), p=2, dim=1)
@@ -323,16 +411,22 @@ def make_embedder(
             dtype=dtype or "auto",
             load_in_4bit=force_4bit,
         )
-    if selected in {"hf_encoder", "esm", "esm2", "prott5", "dnabert", "nucleotide"}:
+    if selected in {"hf_encoder", "esm", "esm2", "prott5", "dnabert", "dnabert2", "dnabert-2", "dnabert_s", "dnabert-s", "nucleotide", "caduceus", "hyenadna", "gena_lm", "gena-lm"}:
         if not model_name:
             raise ValueError(f"The {selected} backend requires a model name or local model path")
+        if selected in {"dnabert2", "dnabert-2"}:
+            return DNABERT2Embedder(
+                model_name=model_name,
+                pooling=pooling or "mean",
+                dtype=dtype or "fp32",
+            )
         input_format = (
             "prott5"
             if selected == "prott5" or "prot_t5" in str(model_name).lower()
             else "protein"
             if selected in {"esm", "esm2"}
             else "dna"
-            if selected in {"dnabert", "nucleotide"}
+            if selected in {"dnabert", "dnabert_s", "dnabert-s", "nucleotide", "caduceus", "hyenadna", "gena_lm", "gena-lm"}
             else "auto"
         )
         return HFEncoderEmbedder(
@@ -340,8 +434,14 @@ def make_embedder(
             pooling=pooling or "mean",
             dtype=dtype or "auto",
             input_format=input_format,
-            trust_remote_code=selected in {"dnabert", "nucleotide"},
+            trust_remote_code=selected in {"dnabert", "dnabert_s", "dnabert-s", "nucleotide", "caduceus", "hyenadna", "gena_lm", "gena-lm"},
         )
+    if selected in {"dna_es2", "dna-es2", "dna_esm", "dna-esm"}:
+        if not model_name:
+            raise ValueError("The DNA-ESM backend requires a trained model directory")
+        from dnarag.dna_es2 import DNAESMEmbedder
+
+        return DNAESMEmbedder(model_name=model_name, pooling=pooling or "mean", dtype=dtype or "fp32")
     if selected == "gguf":
         if not model_name:
             raise ValueError("The GGUF backend requires a model name, directory, or .gguf path")
@@ -992,7 +1092,15 @@ def _backend_requires_model(backend: str) -> bool:
         "esm2",
         "prott5",
         "dnabert",
+        "dnabert2",
+        "dnabert-2",
+        "dnabert_s",
+        "dnabert-s",
         "nucleotide",
+        "dna_es2",
+        "dna-es2",
+        "dna_esm",
+        "dna-esm",
     }
 
 
@@ -1033,8 +1141,18 @@ def _last_hidden_state_from_output(output: Any) -> Any:
 
 
 def _encoder_pooling_mask(encoded: dict[str, Any], tokenizer: Any) -> Any:
-    mask = encoded["attention_mask"].clone()
     input_ids = encoded.get("input_ids")
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is None:
+        if input_ids is None:
+            raise RuntimeError("Encoder tokenizer returned neither input_ids nor attention_mask")
+        # Some custom DNA tokenizers omit attention_mask; infer it from padding.
+        pad_token_id = getattr(tokenizer, "pad_token_id", None)
+        if pad_token_id is None:
+            attention_mask = input_ids.new_ones(input_ids.shape)
+        else:
+            attention_mask = input_ids.ne(int(pad_token_id)).long()
+    mask = attention_mask.clone()
     if input_ids is None:
         return mask
     special_ids = {
@@ -1052,7 +1170,7 @@ def _encoder_pooling_mask(encoded: dict[str, Any], tokenizer: Any) -> Any:
         mask = mask.masked_fill(input_ids == int(token_id), 0)
     empty = mask.sum(dim=1) == 0
     if empty.any():
-        mask[empty] = encoded["attention_mask"][empty]
+        mask[empty] = attention_mask[empty]
     return mask
 
 
@@ -1081,6 +1199,66 @@ def _patch_dna_encoder_config_defaults(config: Any) -> None:
     for key, value in defaults.items():
         if getattr(config, key, None) is None:
             setattr(config, key, value)
+
+
+def _load_dnabert2_classes(model_name: str) -> tuple[Any, Any]:
+    """Load DNABERT-2's custom classes without registering them with AutoModel."""
+    module_root: Path | None = None
+    explicit_root = os.environ.get("DNARAG_DNABERT2_MODULE_DIR")
+    if explicit_root:
+        candidate = Path(explicit_root).expanduser()
+        if (candidate / "bert_layers.py").exists():
+            module_root = candidate
+    if module_root is None:
+        cache_roots = [
+            Path(os.environ.get("HF_MODULES_CACHE", "")),
+            Path(os.environ.get("HF_HOME", "")) / "modules",
+            Path.home() / ".cache" / "huggingface" / "modules",
+        ]
+        for cache_root in cache_roots:
+            if not str(cache_root) or not cache_root.exists():
+                continue
+            matches = sorted(cache_root.glob("transformers_modules/**/bert_layers.py"))
+            matches = [
+                path
+                for path in matches
+                if "dnabert" in str(path).lower() and "2" in str(path).lower()
+            ]
+            if matches:
+                module_root = matches[-1].parent
+                break
+    if module_root is None:
+        raise RuntimeError(
+            "DNABERT-2 custom code is not cached. Set DNARAG_DNABERT2_MODULE_DIR "
+            "to the directory containing bert_layers.py and configuration_bert.py."
+        )
+
+    package_name = f"dnarag_dnabert2_{abs(hash(str(module_root))) % 10**10}"
+    package = types.ModuleType(package_name)
+    package.__path__ = [str(module_root)]
+    sys.modules[package_name] = package
+
+    def load_module(module_name: str) -> Any:
+        full_name = f"{package_name}.{module_name}"
+        existing = sys.modules.get(full_name)
+        if existing is not None:
+            return existing
+        source = module_root / f"{module_name}.py"
+        if not source.exists():
+            raise RuntimeError(f"DNABERT-2 custom module is missing {source}")
+        spec = importlib.util.spec_from_file_location(full_name, source)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not import DNABERT-2 custom module {source}")
+        loaded = importlib.util.module_from_spec(spec)
+        sys.modules[full_name] = loaded
+        spec.loader.exec_module(loaded)
+        return loaded
+
+    config_module = load_module("configuration_bert")
+    load_module("bert_padding")
+    layers_module = load_module("bert_layers")
+    layers_module.flash_attn_qkvpacked_func = None
+    return config_module.BertConfig, layers_module.BertModel
 
 
 def _patch_transformers_legacy_pytorch_utils() -> None:
@@ -1138,6 +1316,20 @@ def _patch_transformers_legacy_pytorch_utils() -> None:
             return head_mask.to(dtype=self.dtype)
 
         pre_trained.get_head_mask = get_head_mask
+
+
+def selected_model_uses_legacy_flash(model_name: str) -> bool:
+    lowered = str(model_name or "").lower()
+    return "dnabert" in lowered
+
+
+def _disable_legacy_flash_attention() -> None:
+    """Disable old DNABERT remote Triton code on modern PyTorch/Triton stacks."""
+    for module in list(sys.modules.values()):
+        if module is None or not str(getattr(module, "__name__", "")).endswith("bert_layers"):
+            continue
+        if hasattr(module, "flash_attn_qkvpacked_func"):
+            module.flash_attn_qkvpacked_func = None
 
 
 def _try_write_faiss(path: Path, matrix: np.ndarray) -> None:

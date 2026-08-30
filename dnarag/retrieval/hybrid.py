@@ -223,7 +223,11 @@ class HybridBioSearch:
             "esm2",
             "prott5",
             "dnabert",
+            "dnabert2",
+            "dnabert-2",
             "nucleotide",
+            "dna_es2",
+            "dna-es2",
         }:
             try:
                 embedder = self._get_embedder(backend=backend, model=model, pooling=pooling)

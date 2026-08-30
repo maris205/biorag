@@ -1,0 +1,31 @@
+dataset:
+  source: data/seq_lit_dag_swissprot_2k
+  split: data/seq_lit_dag_function_heldout_2k
+  queries: data/seq_lit_dag_function_heldout_2k/queries.jsonl
+  documents: data/seq_lit_dag_function_heldout_2k/index_documents.jsonl
+  graph_db: data/seq_lit_dag_swissprot_2k/graph.sqlite
+
+evaluation:
+  query_count: 99
+  index_proteins: 1901
+  protein_k: [10, 50]
+  paper_k: [50, 200]
+  window_size: 128
+  window_stride: 64
+  pooling: mean
+
+models:
+  - name: prott5_mean
+    backend: prott5
+    model: Rostlab/prot_t5_xl_uniref50
+    dtype: bf16
+    batch_size: 16
+  - name: esm2_mean
+    backend: esm
+    model: facebook/esm2_t33_650M_UR50D
+    dtype: bf16
+    batch_size: 16
+
+claim_scope: >-
+  Held-out parent accessions are absent from the index. Relevance is defined by
+  low-frequency shared GO terms and index-side curated GOA paper evidence.
