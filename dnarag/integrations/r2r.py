@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -70,6 +71,9 @@ def build_r2r_bundle(
     output_dir: str | Path,
     *,
     include_sequence_documents: bool = False,
+    documents_file: str | Path | None = None,
+    heldout_queries_file: str | Path | None = None,
+    documents_only: bool = False,
     document_limit: int = 0,
     entity_limit: int = 0,
     relationship_limit: int = 0,
@@ -81,12 +85,13 @@ def build_r2r_bundle(
     source_manifest = _read_json(source / "manifest.json", default={})
     snapshot = _snapshot_label(source_manifest)
 
-    nodes = list(_read_jsonl(source / "nodes.jsonl", limit=entity_limit))
+    nodes = [] if documents_only else list(_read_jsonl(source / "nodes.jsonl", limit=entity_limit))
     node_by_id = {str(row["entity_id"]): row for row in nodes}
     entities = [_to_r2r_entity(row, snapshot=snapshot) for row in nodes]
 
     relationships: list[dict[str, Any]] = []
-    for row in _read_jsonl(source / "edges.jsonl", limit=relationship_limit):
+    edge_rows = () if documents_only else _read_jsonl(source / "edges.jsonl", limit=relationship_limit)
+    for row in edge_rows:
         source_id = str(row["source_entity_id"])
         target_id = str(row["target_entity_id"])
         if source_id not in node_by_id or target_id not in node_by_id:
@@ -102,7 +107,22 @@ def build_r2r_bundle(
 
     documents: list[dict[str, Any]] = []
     skipped_sequences = 0
-    for row in _read_jsonl(source / "documents.jsonl"):
+    document_source = Path(documents_file) if documents_file else source / "documents.jsonl"
+    heldout_query_source = Path(heldout_queries_file) if heldout_queries_file else None
+    heldout_accessions = (
+        {
+            str(row.get("heldout_accession") or "").strip()
+            for row in _read_jsonl(heldout_query_source)
+            if str(row.get("heldout_accession") or "").strip()
+        }
+        if heldout_query_source
+        else set()
+    )
+    indexed_accessions: set[str] = set()
+    for row in _read_jsonl(document_source):
+        accession = str(row.get("accession") or "").strip()
+        if accession:
+            indexed_accessions.add(accession)
         modality = str(row.get("modality") or "")
         if modality in SEQUENCE_MODALITIES and not include_sequence_documents:
             skipped_sequences += 1
@@ -110,6 +130,13 @@ def build_r2r_bundle(
         documents.append(_to_r2r_document(row, snapshot=snapshot))
         if document_limit and len(documents) >= document_limit:
             break
+
+    heldout_overlap = sorted(indexed_accessions & heldout_accessions)
+    if heldout_overlap:
+        preview = ", ".join(heldout_overlap[:10])
+        raise ValueError(
+            f"R2R document collection contains {len(heldout_overlap)} held-out parent accessions: {preview}"
+        )
 
     _write_jsonl(output / "documents.jsonl", documents)
     _write_jsonl(output / "entities.jsonl", entities)
@@ -119,6 +146,7 @@ def build_r2r_bundle(
         "version": "0.1.0",
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "source_dir": str(source),
+        "documents_source": str(document_source),
         "source_dataset_version": source_manifest.get("version"),
         "source_snapshot": snapshot,
         "r2r_contract": {
@@ -139,6 +167,13 @@ def build_r2r_bundle(
         ),
         "provenance_fields": list(PROVENANCE_FIELDS),
         "include_sequence_documents": include_sequence_documents,
+        "documents_only": documents_only,
+        "leakage_audit": {
+            "heldout_queries_file": str(heldout_query_source) if heldout_query_source else None,
+            "heldout_parent_count": len(heldout_accessions),
+            "indexed_accession_count": len(indexed_accessions),
+            "exact_accession_overlap": len(heldout_overlap),
+        },
         "counts": {
             "documents": len(documents),
             "entities": len(entities),
@@ -175,6 +210,7 @@ def import_r2r_bundle(
     document_limit: int = 0,
     entity_limit: int = 0,
     relationship_limit: int = 0,
+    document_workers: int = 1,
 ) -> R2RImportResult:
     """Import a bundle through the public R2R v3 SDK with resumable state."""
     bundle = Path(bundle_dir)
@@ -197,22 +233,43 @@ def import_r2r_bundle(
     }
 
     if import_documents:
+        pending_documents = []
         for row in _read_jsonl(bundle / "documents.jsonl", limit=document_limit):
             local_id = str(row["local_id"])
             if local_id in state["documents"]:
                 counts["skipped_documents"] += 1
                 continue
-            response = client.documents.create(
-                chunks=list(row["chunks"]),
-                id=str(_document_uuid(local_id)),
-                ingestion_mode="fast",
-                collection_ids=[collection_id],
-                metadata=dict(row["metadata"]),
-                run_with_orchestration=False,
-            )
-            state["documents"][local_id] = _response_id(response) or str(_document_uuid(local_id))
-            counts["imported_documents"] += 1
-            _checkpoint(state_file, state, counts["imported_documents"])
+            pending_documents.append(row)
+        workers = max(1, int(document_workers))
+        if workers == 1:
+            for row in pending_documents:
+                local_id, remote_id = _import_r2r_document(client, collection_id, row)
+                state["documents"][local_id] = remote_id
+                counts["imported_documents"] += 1
+                _checkpoint(state_file, state, counts["imported_documents"])
+        else:
+            failures: list[tuple[str, Exception]] = []
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = {
+                    executor.submit(_import_r2r_document, client, collection_id, row): str(row["local_id"])
+                    for row in pending_documents
+                }
+                for future in as_completed(futures):
+                    local_id = futures[future]
+                    try:
+                        _, remote_id = future.result()
+                    except Exception as exc:  # Preserve all successful IDs before failing the run.
+                        failures.append((local_id, exc))
+                        continue
+                    state["documents"][local_id] = remote_id
+                    counts["imported_documents"] += 1
+                    _checkpoint(state_file, state, counts["imported_documents"])
+            _write_state(state_file, state)
+            if failures:
+                local_id, exc = failures[0]
+                raise RuntimeError(
+                    f"R2R document import failed for {len(failures)} records; first failure: {local_id}: {exc}"
+                ) from exc
 
     if import_graph:
         for row in _read_jsonl(bundle / "entities.jsonl", limit=entity_limit):
@@ -260,6 +317,42 @@ def import_r2r_bundle(
 
     _write_state(state_file, state)
     return R2RImportResult(collection_id=collection_id, state_path=state_file, **counts)
+
+
+def _import_r2r_document(
+    client: Any,
+    collection_id: str,
+    row: dict[str, Any],
+) -> tuple[str, str]:
+    local_id = str(row["local_id"])
+    deterministic_id = str(_document_uuid(local_id))
+    try:
+        response = client.documents.create(
+            chunks=list(row["chunks"]),
+            id=deterministic_id,
+            ingestion_mode="fast",
+            collection_ids=[collection_id],
+            metadata=dict(row["metadata"]),
+            run_with_orchestration=False,
+        )
+    except Exception as exc:
+        if "already ingested and is not in a failed state" not in str(exc):
+            raise
+        existing = client.documents.retrieve(deterministic_id)
+        remote = _value(existing, "results") or existing
+        remote_metadata = dict(_value(remote, "metadata") or {})
+        expected_record_id = str(dict(row["metadata"]).get("biorag_record_id") or "")
+        remote_record_id = str(remote_metadata.get("biorag_record_id") or "")
+        if expected_record_id and remote_record_id != expected_record_id:
+            raise RuntimeError(
+                f"R2R deterministic document ID collision for {local_id}: "
+                f"expected {expected_record_id}, found {remote_record_id or 'missing metadata'}"
+            ) from exc
+        remote_collections = {str(item) for item in (_value(remote, "collection_ids") or [])}
+        if collection_id not in remote_collections:
+            client.collections.add_document(id=collection_id, document_id=deterministic_id)
+        return local_id, deterministic_id
+    return local_id, _response_id(response) or deterministic_id
 
 
 def search_r2r_text_control(

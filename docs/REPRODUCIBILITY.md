@@ -560,16 +560,29 @@ identifiers. A same-pack Qwen2.5 run reaches `0.094/0.090`, confirming that the
 evidence-route conclusion is not specific to the newer executor. These are
 structured identifier tasks, not free-form biological QA.
 
-The generic text-only R2R control requires a live, frozen R2R collection. Record
-the server/SDK version, collection UUID, and embedding model label:
+Build and import the generic text-only R2R control from the same held-out index.
+The export fails if any of the 99 held-out parent accessions occurs in the 1,901
+protein index. Install the frozen R2R runtime as described in
+`docs/R2R_APPLICATION.md`, start the service with
+`configs/r2r_text_control.toml`, then run:
 
 ```bash
-python scripts/eval_r2r_text_control.py \
-  --base-url http://localhost:7272 \
+.venv-r2r/bin/python scripts/export_seq_lit_r2r.py \
+  --source data/seq_lit_dag_swissprot_2k \
+  --documents-file data/seq_lit_dag_function_heldout_2k/index_documents.jsonl \
+  --heldout-queries-file data/seq_lit_dag_function_heldout_2k/queries.jsonl \
+  --documents-only --include-sequence-documents \
+  --output outputs/r2r/seq_lit_dag_function_heldout_2k_text_control \
+  --ingest --skip-graph --base-url http://127.0.0.1:7272 \
+  --collection-name 'BioRAG SeqLit heldout text control Qwen3-0.6B' \
+  --document-workers 4
+
+.venv-r2r/bin/python scripts/eval_r2r_text_control.py \
+  --base-url http://127.0.0.1:7272 \
   --collection-id <frozen-collection-uuid> \
-  --embedding-label <configured-r2r-embedding> \
+  --embedding-label qwen3-embedding:0.6b@ollama-ac6da0dfba84 \
   --top-k 50 \
-  --output reports/results/r2r_text_control.json
+  --output reports/results/r2r_text_control_qwen3_06b.json
 ```
 
 The evaluator also emits a normalized Agent pack at
@@ -578,5 +591,14 @@ with the same Qwen3.5 command and `--evidence-mode raw`, then score it against
 the same 66 test IDs. This makes the live R2R condition an end-to-end Agent
 route rather than a retrieval-only latency row.
 
-Do not label a local proxy as an R2R result. The full integration contract is in
+The result records R2R 3.6.6, its key dependency versions, the collection UUID
+and size, Qwen3-Embedding configuration, and server-side embedding-plus-lookup
+latency. Graph, full-text, and hybrid search are disabled so this remains an
+ordinary semantic text-RAG control. Do not label a local proxy as an R2R result.
+On the frozen run, top-50 R2R text retrieval has zero gold candidate and prompt
+coverage, while the sequence-vector route gains function/literature F1
+`0.072/0.075` with paired intervals excluding zero. Exact indexed-sequence and
+top-200 diagnostics localize the failure to generic sequence representation,
+not missing collection records. Full details are in
+`reports/r2r_text_control_qwen3_06b.md`; the integration contract is in
 `docs/R2R_APPLICATION.md`.

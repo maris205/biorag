@@ -13,7 +13,7 @@ downstream Agent ablation rather than another DNA encoder sweep.
 | Retrieval engineering is not yet a downstream scientific task | Added a frozen 66-query application ablation over no retrieval, sequence vector, combined vector+BLAST, and combined vector+BLAST+typed DAG evidence |
 | Open-Rosalind/application connection is conceptual | Added an R2R v3 application adapter because the production project already uses R2R; the same evidence contract can be exposed to Open-Rosalind-style agents |
 | DRAG edges need auditable provenance | Added `source_record`, `evidence_level`, `retrieval_score`, `verification_method`, and `database_version` to SeqLit-DAG edges and R2R relationship metadata |
-| Ordinary text RAG needs a controlled comparison | Added a live R2R text-only evaluator and a separately labeled sequence-in-text control collection; no result is claimed without a frozen live endpoint |
+| Ordinary text RAG needs a controlled comparison | Completed a leakage-audited live R2R text-only route over 14,071 records with a frozen Qwen3-Embedding artifact and the same 66-query Qwen3.5 executor |
 | Generator choice should not define the contribution | Retrieval packs are frozen independently of the generator; Qwen3.5 is the main executor and Qwen2.5 is retained as a robustness reference |
 | Unknown evidence should not trigger invention | Added evidence-aware abstention prompts and scoring for empty evidence packs |
 | Deployment should be realistic | R2R handles CRUD, collections, text retrieval, and Agent APIs; BioRAG supplies sequence retrieval, BLAST, typed graph paths, and evidence provenance |
@@ -25,6 +25,7 @@ route changes:
 
 | Route | Function F1 | Literature F1 | GO/PMID prompt recall | GO/PMID selection F1 |
 |---|---:|---:|---:|---:|
+| Ordinary text RAG (R2R) | 0.000 | 0.000 | 0.000 / 0.000 | 0.865 / 1.000 |
 | Sequence vector | 0.072 | 0.075 | 0.187 / 0.128 | 0.944 / 1.000 |
 | Combined BLAST+vector | 0.087 | 0.084 | 0.202 / 0.133 | 0.933 / 1.000 |
 | Combined BLAST+vector+DAG | 0.094 | 0.088 | 0.202 / 0.133 | 1.000 / 1.000 |
@@ -37,16 +38,26 @@ identifier, and complete mechanism abstention. Qwen2.5 reproduces the same DAG
 result at function/literature F1 0.094/0.090, so the conclusion is not tied to
 Qwen3.5.
 
+The live R2R 3.6.6 collection contains 14,071 held-out-index documents and has
+zero exact overlap with 99 held-out parent accessions. It uses
+`qwen3-embedding:0.6b` through Ollama 0.33.2 (Q8_0, digest
+`ac6da0dfba84`). Top-50 semantic retrieval supplies no gold candidate, GO, or
+PMID evidence to the prompt; Qwen3.5 nevertheless preserves citation entailment
+1.000 and produces no out-of-pack identifier. Relative to R2R, sequence vector
+raises function/literature F1 by 0.072/0.075 with paired 95% intervals
+`[0.035, 0.116]` and `[0.039, 0.115]`. Natural-language accession checks succeed
+at rank 1, while exact indexed-protein sequence Hit@50 is only 0.10 on a
+20-query diagnostic, localizing the failure to generic sequence representation.
+
 The 2k SeqLit-DAG was rebuilt as v0.2.0 with unchanged counts and complete
-static-edge provenance. Its R2R application projection contains 12,858
+static-edge provenance. Its authoritative R2R projection contains 12,858
 text/mixed documents, 22,939 entities, and 63,651 explicit relationships. The
-live R2R text-only result remains pending because this machine has no frozen R2R
-endpoint or collection; no proxy is substituted.
+separate text-only control is now a completed live deployment result rather
+than a local proxy.
 
 ## Still Required for a Stronger Biological Claim
 
 - family/Pfam-cluster, species, temporal, or database-version holdout;
-- a live R2R text-only run with a frozen server, collection, and embedding model;
 - free-form expert evaluation beyond GO/PMID identifier execution;
 - larger sequence-to-literature resources and title/abstract coverage;
 - end-to-end concurrent latency on the deployed application;

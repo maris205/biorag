@@ -7,6 +7,7 @@ import json
 import statistics
 import sys
 import time
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -18,11 +19,18 @@ from dnarag.integrations.r2r import build_r2r_text_control_pack, search_r2r_text
 def main() -> None:
     args = parse_args()
     try:
+        import r2r
         from r2r import R2RClient
     except ImportError as exc:
-        raise SystemExit("Install the optional R2R SDK with `pip install 'r2r>=3.6,<4'`.") from exc
+        raise SystemExit("Install the frozen optional runtime with `bash scripts/setup_r2r_runtime.sh`.") from exc
     client = R2RClient(base_url=args.base_url)
+    runtime = collect_runtime_metadata(
+        client,
+        collection_id=args.collection_id,
+        sdk_version=str(getattr(r2r, "__version__", "unknown")),
+    )
     queries = read_jsonl(Path(args.queries))
+    corpus_manifest = json.loads(Path(args.bundle_manifest).read_text(encoding="utf-8"))
     if args.test_ids:
         test_ids = {
             line.strip()
@@ -70,6 +78,32 @@ def main() -> None:
         "r2r_base_url": args.base_url,
         "collection_id": args.collection_id,
         "embedding_label": args.embedding_label,
+        "embedding_artifact": {
+            "serving_runtime": args.embedding_server,
+            "model": "qwen3-embedding:0.6b",
+            "digest": args.embedding_digest,
+            "parameters": args.embedding_parameters,
+            "quantization": args.embedding_quantization,
+            "dimension": 1024,
+        },
+        "runtime": runtime,
+        "corpus": {
+            "manifest": args.bundle_manifest,
+            "source_snapshot": corpus_manifest.get("source_snapshot"),
+            "documents_source": corpus_manifest.get("documents_source"),
+            "include_sequence_documents": corpus_manifest.get("include_sequence_documents"),
+            "documents_only": corpus_manifest.get("documents_only"),
+            "counts": corpus_manifest.get("counts"),
+            "leakage_audit": corpus_manifest.get("leakage_audit"),
+        },
+        "retrieval_configuration": {
+            "search_mode": "custom",
+            "semantic_search": True,
+            "fulltext_search": False,
+            "hybrid_search": False,
+            "graph_search": False,
+            "collection_filter": args.collection_id,
+        },
         "test_ids": args.test_ids,
         "query_count": len(details),
         "top_k": args.top_k,
@@ -92,6 +126,65 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({"output": str(output), "latency": result["latency"]}, indent=2))
+
+
+def collect_runtime_metadata(client: Any, *, collection_id: str, sdk_version: str) -> dict[str, Any]:
+    """Record the live retriever configuration without exporting credentials."""
+    health = _model_dict(client.system.health()).get("results", {})
+    status = _model_dict(client.system.status()).get("results", {})
+    settings = _model_dict(client.system.settings()).get("results", {}).get("config", {})
+    collection = _model_dict(client.collections.retrieve(collection_id)).get("results", {})
+    embedding = dict(settings.get("embedding") or {})
+    ingestion = dict(settings.get("ingestion") or {})
+    database = dict(settings.get("database") or {})
+    app = dict(settings.get("app") or {})
+    return {
+        "r2r_sdk_version": sdk_version,
+        "dependency_versions": {
+            package: _package_version(package)
+            for package in ("pydantic", "litellm", "openai", "unstructured-client", "supabase")
+        },
+        "health_message": health.get("message"),
+        "server_start_time": status.get("start_time"),
+        "project_name": app.get("project_name"),
+        "embedding": {
+            key: embedding.get(key)
+            for key in (
+                "provider",
+                "base_model",
+                "base_dimension",
+                "batch_size",
+                "concurrent_request_limit",
+            )
+        },
+        "ingestion": {
+            "provider": ingestion.get("provider"),
+            "automatic_extraction": ingestion.get("automatic_extraction"),
+            "chunking_strategy": ingestion.get("chunking_strategy"),
+            "chunk_size": ingestion.get("chunk_size"),
+            "chunk_overlap": ingestion.get("chunk_overlap"),
+        },
+        "database_provider": database.get("provider"),
+        "collection": {
+            key: collection.get(key)
+            for key in ("id", "name", "document_count", "created_at", "updated_at")
+        },
+    }
+
+
+def _model_dict(value: Any) -> dict[str, Any]:
+    if hasattr(value, "model_dump"):
+        return dict(value.model_dump(mode="json"))
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
+def _package_version(package: str) -> str | None:
+    try:
+        return version(package)
+    except PackageNotFoundError:
+        return None
 
 
 def summarize_retrieval(rows: list[dict[str, Any]]) -> dict[str, float]:
@@ -132,7 +225,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default="http://localhost:7272")
     parser.add_argument("--collection-id", required=True)
     parser.add_argument("--embedding-label", required=True)
+    parser.add_argument("--embedding-server", default="ollama==0.33.2")
+    parser.add_argument("--embedding-digest", default="ac6da0dfba84")
+    parser.add_argument("--embedding-parameters", default="595.78M")
+    parser.add_argument("--embedding-quantization", default="Q8_0")
     parser.add_argument("--queries", default="data/seq_lit_dag_function_heldout_2k/queries.jsonl")
+    parser.add_argument(
+        "--bundle-manifest",
+        default="outputs/r2r/seq_lit_dag_function_heldout_2k_text_control/manifest.json",
+    )
     parser.add_argument(
         "--test-ids",
         default="reports/results/agent_graph_selector_fused_full_p20_test_ids.txt",

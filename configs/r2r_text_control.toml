@@ -1,0 +1,46 @@
+[app]
+project_name = "biorag_r2r_text_qwen3_06b"
+default_max_documents_per_user = 100000
+fast_llm = "ollama/qwen3.5:9b"
+quality_llm = "ollama/qwen3.5:9b"
+
+[embedding]
+provider = "ollama"
+base_model = "qwen3-embedding:0.6b"
+base_dimension = 1024
+batch_size = 32
+concurrent_request_limit = 4
+
+[completion_embedding]
+provider = "ollama"
+base_model = "qwen3-embedding:0.6b"
+base_dimension = 1024
+batch_size = 32
+concurrent_request_limit = 4
+
+[completion]
+provider = "litellm"
+
+  [completion.generation_config]
+  temperature = 0.0
+  top_p = 1.0
+  max_tokens_to_sample = 160
+  stream = false
+  api_base = "http://127.0.0.1:11434/v1"
+
+[ingestion]
+provider = "r2r"
+automatic_extraction = false
+chunking_strategy = "recursive"
+chunk_size = 4096
+chunk_overlap = 0
+
+[orchestration]
+provider = "simple"
+
+[database]
+
+  [database.limits]
+  global_per_min = 1000000
+  route_per_min = 1000000
+  monthly_limit = 10000000

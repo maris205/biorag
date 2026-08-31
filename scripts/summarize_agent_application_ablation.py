@@ -11,6 +11,7 @@ from typing import Any
 
 ROUTES = (
     ("no_retrieval", "No retrieval"),
+    ("r2r_text_only", "Ordinary text RAG (R2R)"),
     ("sequence_vector", "Sequence vector"),
     ("combined_blast_vector", "Combined BLAST+vector"),
     ("combined_blast_vector_dag", "Combined BLAST+vector+DAG"),
@@ -44,7 +45,7 @@ def main() -> None:
         "paired_comparisons": build_paired_comparisons(scores_by_route),
         "generator_robustness": load_generator_robustness(root, args.prefix),
         "missing_routes": missing,
-        "r2r_text_only": "pending live frozen R2R collection",
+        "r2r_text_control": load_r2r_control(Path(args.r2r_result)),
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -81,6 +82,16 @@ def to_row(route: str, label: str, generated: dict[str, Any], score: dict[str, A
 def build_paired_comparisons(scores: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     comparisons = []
     specifications = (
+        (
+            "r2r_text_only",
+            "sequence_vector",
+            (
+                ("function", "answer_f1"),
+                ("literature", "answer_f1"),
+                ("function", "prompt_gold_recall"),
+                ("literature", "prompt_gold_recall"),
+            ),
+        ),
         (
             "sequence_vector",
             "combined_blast_vector",
@@ -198,6 +209,23 @@ def load_generator_robustness(root: Path, main_prefix: str) -> list[dict[str, An
     return rows
 
 
+def load_r2r_control(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"status": "pending", "result_path": str(path)}
+    result = json.loads(path.read_text(encoding="utf-8"))
+    runtime = dict(result.get("runtime") or {})
+    return {
+        "status": "completed",
+        "result_path": str(path),
+        "collection_id": result.get("collection_id"),
+        "embedding_label": result.get("embedding_label"),
+        "r2r_sdk_version": runtime.get("r2r_sdk_version"),
+        "document_count": dict(runtime.get("collection") or {}).get("document_count"),
+        "retrieval_latency": result.get("latency"),
+        "retrieval_summary": result.get("retrieval_summary"),
+    }
+
+
 def render_markdown(result: dict[str, Any]) -> str:
     lines = [
         "# Agent Application Route Ablation",
@@ -221,11 +249,29 @@ def render_markdown(result: dict[str, Any]) -> str:
             f"{row['mechanism_abstention']:.3f} | {row['mean_generation_ms']:.1f}/{row['p95_generation_ms']:.1f} | "
             f"{row['peak_gpu_memory_gib']:.3f} |"
         )
+    lines.append("")
+    r2r_control = result["r2r_text_control"]
+    if r2r_control["status"] == "completed":
+        latency = dict(r2r_control.get("retrieval_latency") or {})
+        lines.extend(
+            [
+                f"The ordinary text-RAG control is a live R2R {r2r_control.get('r2r_sdk_version')} collection "
+                f"(`{r2r_control.get('collection_id')}`) with {r2r_control.get('document_count')} documents and "
+                f"{r2r_control.get('embedding_label')}. Graph search is disabled. Its server-side query embedding "
+                f"plus lookup latency is {latency.get('mean_ms', 0.0):.1f} ms mean and "
+                f"{latency.get('p95_ms', 0.0):.1f} ms P95.",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "The R2R text-only row is pending until a live collection ID, R2R version, and embedding configuration are frozen. No proxy result is labeled as R2R.",
+                "",
+            ]
+        )
     lines.extend(
         [
-            "",
-            "The R2R text-only row is intentionally pending until a live collection ID, R2R version, and embedding configuration are frozen. No proxy result is labeled as R2R.",
-            "",
             "The no-retrieval condition applies the system's no-evidence abstention policy; citation entailment and evidence selection are therefore not applicable rather than positive results.",
             "",
         ]
@@ -283,6 +329,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--prefix", default="qwen35")
     parser.add_argument("--output", default="reports/results/agent_application_ablation_qwen35.json")
     parser.add_argument("--markdown", default="reports/agent_application_ablation_qwen35.md")
+    parser.add_argument("--r2r-result", default="reports/results/r2r_text_control_qwen3_06b.json")
     return parser.parse_args()
 
 

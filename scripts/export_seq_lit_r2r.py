@@ -18,6 +18,9 @@ def main() -> None:
         args.source,
         args.output,
         include_sequence_documents=args.include_sequence_documents,
+        documents_file=args.documents_file,
+        heldout_queries_file=args.heldout_queries_file,
+        documents_only=args.documents_only,
         document_limit=args.document_limit,
         entity_limit=args.entity_limit,
         relationship_limit=args.relationship_limit,
@@ -27,7 +30,9 @@ def main() -> None:
         try:
             from r2r import R2RClient
         except ImportError as exc:
-            raise SystemExit("Install the optional R2R SDK with `pip install 'r2r>=3.6,<4'`.") from exc
+            raise SystemExit(
+                "Install the frozen optional runtime with `bash scripts/setup_r2r_runtime.sh`."
+            ) from exc
         client = R2RClient(base_url=args.base_url)
         imported = import_r2r_bundle(
             client,
@@ -40,6 +45,7 @@ def main() -> None:
             document_limit=args.document_limit,
             entity_limit=args.entity_limit,
             relationship_limit=args.relationship_limit,
+            document_workers=args.document_workers,
         )
         result["import"] = imported.to_dict()
     print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -50,9 +56,30 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source", default="data/seq_lit_dag_swissprot_sample")
     parser.add_argument("--output", default="outputs/r2r/seq_lit_dag_swissprot_sample")
     parser.add_argument("--include-sequence-documents", action="store_true")
+    parser.add_argument(
+        "--documents-file",
+        default=None,
+        help="Optional split-specific documents JSONL, such as a held-out index export.",
+    )
+    parser.add_argument(
+        "--heldout-queries-file",
+        default=None,
+        help="Assert that no heldout_accession in this query JSONL occurs in the exported documents.",
+    )
+    parser.add_argument(
+        "--documents-only",
+        action="store_true",
+        help="Export the text-control documents without the authoritative graph projection.",
+    )
     parser.add_argument("--document-limit", type=int, default=0)
     parser.add_argument("--entity-limit", type=int, default=0)
     parser.add_argument("--relationship-limit", type=int, default=0)
+    parser.add_argument(
+        "--document-workers",
+        type=int,
+        default=1,
+        help="Concurrent live document-ingestion requests; deterministic IDs and resumable state are preserved.",
+    )
     parser.add_argument("--ingest", action="store_true")
     parser.add_argument("--base-url", default="http://localhost:7272")
     parser.add_argument("--collection-id", default=None)

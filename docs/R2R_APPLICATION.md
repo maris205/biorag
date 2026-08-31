@@ -89,33 +89,76 @@ It contains 12,858 text/mixed evidence documents, 22,939 entities, and 63,651
 explicit relationships while excluding 2,000 raw sequence documents from the
 generic text collection.
 
-Create a separate generic text-RAG control that includes sequence payloads. This
-collection is for the application ablation only and must not be reported as a
-biological sequence encoder:
+Create the leakage-audited generic text-RAG control from the same held-out split
+used by the Agent ablation. It contains 1,901 index proteins and 12,170
+flattened text-evidence records. The 99 held-out parents are rejected if any
+accession occurs in this collection:
 
 ```bash
 python scripts/export_seq_lit_r2r.py \
-  --source data/seq_lit_dag_swissprot_sample \
-  --output outputs/r2r/seq_lit_dag_text_control \
-  --include-sequence-documents
+  --source data/seq_lit_dag_swissprot_2k \
+  --documents-file data/seq_lit_dag_function_heldout_2k/index_documents.jsonl \
+  --heldout-queries-file data/seq_lit_dag_function_heldout_2k/queries.jsonl \
+  --documents-only --include-sequence-documents \
+  --output outputs/r2r/seq_lit_dag_function_heldout_2k_text_control
 ```
+
+The resulting manifest contains 14,071 documents and an explicit leakage audit
+with 99 held-out parents, 1,901 indexed accessions, and zero exact accession
+overlap. This collection is an ordinary flattened text-RAG application control,
+not a biological sequence embedding baseline.
 
 ## Live R2R Import
 
-The adapter targets the public R2R v3 SDK contract tested against R2R 3.6.6. It
-uses pre-processed chunks, explicit entity/relationship creation, deterministic
-document UUIDs, and a resumable import state file.
+The adapter targets the public R2R v3 SDK contract tested against R2R 3.6.6. The
+published 3.6.6 dependency metadata has incompatible OpenAI/LiteLLM constraints,
+so the reproducible setup uses the upstream v3.6.5 frozen lock and overlays only
+the 3.6.6 package:
 
 ```bash
-pip install 'r2r>=3.6,<4'
-export R2R_API_KEY=...
-python scripts/export_seq_lit_r2r.py \
-  --source data/seq_lit_dag_swissprot_sample \
-  --output outputs/r2r/seq_lit_dag_swissprot_sample \
-  --base-url http://localhost:7272 \
-  --collection-name 'BioRAG SeqLit Evidence' \
-  --ingest
+bash scripts/setup_r2r_runtime.sh
 ```
+
+The live text control uses PostgreSQL 14 with pgvector 0.8.1 and Ollama 0.33.2
+with `qwen3-embedding:0.6b` (595.78M parameters, Q8_0 artifact digest
+`ac6da0dfba84`, 1,024 dimensions). Start Ollama and R2R after creating
+the PostgreSQL role/database and enabling the `vector` extension:
+
+```bash
+OLLAMA_MODELS=/path/to/ollama-models ollama serve
+ollama pull qwen3-embedding:0.6b
+
+export R2R_POSTGRES_USER=r2r
+export R2R_POSTGRES_PASSWORD='<local-password>'
+export R2R_POSTGRES_HOST=127.0.0.1
+export R2R_POSTGRES_PORT=5432
+export R2R_POSTGRES_DBNAME=biorag_r2r
+export OLLAMA_API_BASE=http://127.0.0.1:11434
+.venv-r2r/bin/python -m r2r.serve \
+  --host 127.0.0.1 --port 7272 \
+  --config-path configs/r2r_text_control.toml
+```
+
+Import the frozen text control with deterministic UUIDs, four concurrent
+requests, and a resumable state file:
+
+```bash
+.venv-r2r/bin/python scripts/export_seq_lit_r2r.py \
+  --source data/seq_lit_dag_swissprot_2k \
+  --documents-file data/seq_lit_dag_function_heldout_2k/index_documents.jsonl \
+  --heldout-queries-file data/seq_lit_dag_function_heldout_2k/queries.jsonl \
+  --documents-only --include-sequence-documents \
+  --output outputs/r2r/seq_lit_dag_function_heldout_2k_text_control \
+  --ingest --skip-graph --base-url http://127.0.0.1:7272 \
+  --collection-name 'BioRAG SeqLit heldout text control Qwen3-0.6B' \
+  --document-workers 4
+```
+
+The state file is checkpointed after every 50 successful documents. Repeating
+the command resumes the same collection and skips completed deterministic IDs.
+If a remote write succeeds immediately before a local checkpoint, the importer
+recognizes the existing document, verifies its BioRAG record ID, and restores
+the target collection association instead of failing or duplicating content.
 
 For a large graph, keep SQLite as the authoritative graph and import only the
 application projection needed by R2R. The current public R2R graph SDK creates
@@ -125,7 +168,7 @@ use a server-side batch path or a narrower projection.
 
 ## Application Ablation
 
-Freeze the four locally executable evidence conditions:
+Freeze the four biological evidence conditions:
 
 ```bash
 python scripts/build_agent_application_ablation.py
@@ -138,38 +181,44 @@ This creates the same 66-query test partition for:
 3. `combined_blast_vector`;
 4. `combined_blast_vector_dag`.
 
-The fifth condition, `r2r_text_only`, must be run against a live, versioned R2R
-collection. The evaluator records the R2R collection ID, embedding label, API
-latency, ranked accessions, and PMIDs. It also writes
+The fifth condition, `r2r_text_only`, runs against the live, versioned R2R
+collection. The evaluator automatically records the SDK and dependency
+versions, sanitized server settings, collection UUID and document count,
+embedding configuration, API latency, ranked accessions, and PMIDs. It also writes
 `reports/results/agent_application_ablation/r2r_text_only.jsonl`, which uses the
 same evidence-pack contract as the four local routes:
 
 ```bash
-python scripts/eval_r2r_text_control.py \
-  --base-url http://localhost:7272 \
+.venv-r2r/bin/python scripts/eval_r2r_text_control.py \
+  --base-url http://127.0.0.1:7272 \
   --collection-id <frozen-collection-uuid> \
-  --embedding-label <configured-r2r-embedding> \
+  --embedding-label qwen3-embedding:0.6b@ollama-ac6da0dfba84 \
   --top-k 50 \
-  --output reports/results/r2r_text_control.json
+  --output reports/results/r2r_text_control_qwen3_06b.json
 ```
 
 Run the fixed executor on that pack with `--evidence-mode raw`; score it with
 the same query file and `score_generated_agent_qa.py`. This keeps R2R's own
-embedding configuration as the only changed retrieval variable. Until the
-server version, collection UUID, and embedding label are frozen, the R2R row is
-reported as pending rather than replaced by a local proxy.
+embedding configuration as the only changed retrieval variable. R2R graph,
+full-text, and hybrid search are disabled for this control; the measured API
+latency includes server-side query embedding plus pgvector lookup.
 
 The same fixed instruction model must execute every evidence pack. Report
 end-to-end GO/PMID F1, evidence coverage, evidence-selection F1, citation
 validity, citation entailment, out-of-pack identifier hallucination,
 evidence-aware abstention, and end-to-end latency.
 
-The four local routes have been completed with Qwen3.5-9B. Sequence vector,
-combined BLAST+vector, and combined BLAST+vector+DAG obtain function/literature
-F1 of `0.072/0.075`, `0.087/0.084`, and `0.094/0.088`, respectively. DAG keeps
-the prompt evidence coverage fixed and raises GO evidence-selection F1 from
-`0.933` to `1.000`; the paired 95% interval for this delta is
-`[0.035, 0.105]`. The live R2R text-only row remains pending by design.
+All five routes have been completed with Qwen3.5-9B. Ordinary R2R text RAG,
+sequence vector, combined BLAST+vector, and combined BLAST+vector+DAG obtain
+function/literature F1 of `0.000/0.000`, `0.072/0.075`, `0.087/0.084`, and
+`0.094/0.088`, respectively. The generic text embedder retrieves no gold label
+into the fixed five-candidate prompt; a top-200 diagnostic recovers a relevant
+accession for 8/66 queries but still no prompt-level gold evidence. Relative to
+R2R, the sequence-vector gains have paired intervals `[0.035, 0.116]` and
+`[0.039, 0.115]`. DAG keeps prompt coverage fixed and raises GO
+evidence-selection F1 from `0.933` to `1.000` with interval `[0.035, 0.105]`.
+See `reports/r2r_text_control_qwen3_06b.md` for integrity checks and claim
+boundaries.
 
 ## Deployment Notes
 

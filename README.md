@@ -199,10 +199,11 @@ task-specific rather than universal. See
 for split audits, paired intervals, latency, Agent evidence, and limitations.
 
 The final application evaluation uses 33 development and 66 frozen test
-queries. With Qwen3.5-9B fixed across routes, function/literature F1 progresses
-from `0.072/0.075` for sequence vector evidence to `0.087/0.084` for combined
-BLAST+vector evidence and `0.094/0.088` after typed DAG compression. DAG keeps
-prompt coverage fixed but raises GO evidence-selection F1 from `0.933` to
+queries. With Qwen3.5-9B fixed across routes, ordinary R2R text RAG obtains
+`0.000/0.000` function/literature F1 on raw sequence queries; the sequence-aware
+routes progress from `0.072/0.075` for vector evidence to `0.087/0.084` for
+combined BLAST+vector evidence and `0.094/0.088` after typed DAG compression.
+DAG keeps prompt coverage fixed but raises GO evidence-selection F1 from `0.933` to
 `1.000` (paired 95% CI for the delta: `[0.035, 0.105]`). Every evidence-bearing
 route has citation entailment `1.000`, no identifier outside the supplied pack,
 and complete mechanism abstention. Qwen2.5 on the identical DAG pack reproduces
@@ -210,6 +211,11 @@ function/literature F1 `0.094/0.090`. This is structured evidence execution, not
 free-form biomedical reasoning. See
 [`reports/agent_application_ablation_qwen35.md`](reports/agent_application_ablation_qwen35.md)
 for the route ablation, paired intervals, generator control, and claim boundary.
+The live text control uses a leakage-audited 14,071-document R2R 3.6.6
+collection and Qwen3-Embedding-0.6B. Its natural-language accession sanity check
+succeeds, but exact indexed-protein sequence Hit@50 is only `0.10`, showing why
+raw sequences need a dedicated route. See
+[`reports/r2r_text_control_qwen3_06b.md`](reports/r2r_text_control_qwen3_06b.md).
 
 ### Exploratory Sequence-Token Graph
 
@@ -265,7 +271,8 @@ The sample exports 985 text evidence documents, 2,231 entities, and 5,240 typed
 relationships. The same command over `data/seq_lit_dag_swissprot_2k` exports
 12,858 evidence documents, 22,939 entities, and 63,651 typed relationships. A
 separate `--include-sequence-documents` bundle is available
-only for the generic R2R text-only control. See
+only for the generic R2R text-only control; that live control is now complete.
+See
 [`docs/R2R_APPLICATION.md`](docs/R2R_APPLICATION.md) for live import, the frozen
 Agent route ablation, provenance fields, and the deployment boundary.
 

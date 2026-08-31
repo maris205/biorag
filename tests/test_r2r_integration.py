@@ -109,6 +109,64 @@ def test_r2r_bundle_keeps_authoritative_graph_and_excludes_raw_sequences(tmp_pat
     assert manifest["r2r_contract"]["graph_ingestion"].startswith("explicit")
 
 
+def test_r2r_text_control_uses_heldout_index_and_rejects_parent_leakage(tmp_path: Path):
+    source = make_source(tmp_path)
+    split_documents = tmp_path / "index_documents.jsonl"
+    write_jsonl(
+        split_documents,
+        [
+            {
+                "id": "seq_lit:protein:P2",
+                "record_id": "protein:P2",
+                "modality": "protein_sequence",
+                "partition": "seq_lit_dag/protein",
+                "source": "UniProtKB Swiss-Prot",
+                "accession": "P2",
+                "name": "Protein 2",
+                "text": "[TYPE=protein_sequence]\nSequence:\nMCCC",
+                "labels": {"go_ids": ["GO:0000002"], "pmids": ["23456789"]},
+            }
+        ],
+    )
+    queries = tmp_path / "queries.jsonl"
+    write_jsonl(queries, [{"id": "q1", "heldout_accession": "P1", "query": "MAAA"}])
+
+    result = build_r2r_bundle(
+        source,
+        tmp_path / "heldout_bundle",
+        include_sequence_documents=True,
+        documents_file=split_documents,
+        heldout_queries_file=queries,
+        documents_only=True,
+    )
+
+    assert result.document_count == 1
+    assert result.entity_count == 0
+    assert result.relationship_count == 0
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["leakage_audit"] == {
+        "heldout_queries_file": str(queries),
+        "heldout_parent_count": 1,
+        "indexed_accession_count": 1,
+        "exact_accession_overlap": 0,
+    }
+
+    write_jsonl(queries, [{"id": "q1", "heldout_accession": "P2", "query": "MCCC"}])
+    try:
+        build_r2r_bundle(
+            source,
+            tmp_path / "leaky_bundle",
+            include_sequence_documents=True,
+            documents_file=split_documents,
+            heldout_queries_file=queries,
+            documents_only=True,
+        )
+    except ValueError as exc:
+        assert "held-out parent accessions" in str(exc)
+    else:
+        raise AssertionError("Expected held-out parent leakage to be rejected")
+
+
 class FakeDocuments:
     def __init__(self):
         self.calls = []
@@ -135,10 +193,15 @@ class FakeGraphs:
 class FakeCollections:
     def __init__(self):
         self.calls = []
+        self.added_documents = []
 
     def create(self, **kwargs):
         self.calls.append(kwargs)
         return SimpleNamespace(results=SimpleNamespace(id="collection-1"))
+
+    def add_document(self, **kwargs):
+        self.added_documents.append(kwargs)
+        return SimpleNamespace(results=SimpleNamespace(message="added"))
 
 
 def test_r2r_import_uses_public_v3_shapes_and_is_resumable(tmp_path: Path):
@@ -161,6 +224,57 @@ def test_r2r_import_uses_public_v3_shapes_and_is_resumable(tmp_path: Path):
     assert second.skipped_documents == 1
     assert second.skipped_entities == 2
     assert second.skipped_relationships == 1
+
+
+def test_r2r_import_supports_concurrent_document_requests(tmp_path: Path):
+    source = make_source(tmp_path)
+    bundle = build_r2r_bundle(source, tmp_path / "bundle", include_sequence_documents=True)
+    client = SimpleNamespace(documents=FakeDocuments(), graphs=FakeGraphs(), collections=FakeCollections())
+
+    result = import_r2r_bundle(client, bundle.output_dir, import_graph=False, document_workers=2)
+
+    assert result.imported_documents == 2
+    assert len(client.documents.calls) == 2
+    assert len({call["id"] for call in client.documents.calls}) == 2
+
+
+def test_r2r_import_recovers_remote_success_before_local_checkpoint(tmp_path: Path):
+    class AlreadyIngestedDocuments(FakeDocuments):
+        def create(self, **kwargs):
+            self.calls.append(kwargs)
+            raise RuntimeError(
+                f"Document {kwargs['id']} was already ingested and is not in a failed state."
+            )
+
+        def retrieve(self, document_id):
+            return SimpleNamespace(
+                results=SimpleNamespace(
+                    id=document_id,
+                    collection_ids=["previous-collection"],
+                    metadata={"biorag_record_id": "evidence:P1:GO1:IDA:1"},
+                )
+            )
+
+    source = make_source(tmp_path)
+    bundle = build_r2r_bundle(source, tmp_path / "bundle")
+    collections = FakeCollections()
+    client = SimpleNamespace(
+        documents=AlreadyIngestedDocuments(),
+        graphs=FakeGraphs(),
+        collections=collections,
+    )
+
+    result = import_r2r_bundle(
+        client,
+        bundle.output_dir,
+        collection_id="collection-1",
+        import_graph=False,
+    )
+
+    assert result.imported_documents == 1
+    assert collections.added_documents == [
+        {"id": "collection-1", "document_id": client.documents.calls[0]["id"]}
+    ]
 
 
 def test_r2r_text_control_disables_graph_and_preserves_metadata():

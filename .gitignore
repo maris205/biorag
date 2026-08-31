@@ -12,8 +12,10 @@ dist/
 
 # Local/editor state
 .claude/
+.cache/
 .ipynb_checkpoints/
 id.txt
+logs/
 
 # Local data and generated indexes
 data/
