@@ -217,6 +217,14 @@ succeeds, but exact indexed-protein sequence Hit@50 is only `0.10`, showing why
 raw sequences need a dedicated route. See
 [`reports/r2r_text_control_qwen3_06b.md`](reports/r2r_text_control_qwen3_06b.md).
 
+A separate 30-case free-form pilot is now frozen across all five routes. It
+contains 150 Qwen3.5 evidence notes, a balanced assessor-blinded presentation,
+and a two-reviewer scoring protocol. Automatic checks show non-zero exact
+GO/PMID recovery only after sequence-aware routing, but BLAST and DAG additions
+are not monotonically better on these string metrics. Expert ratings remain
+pending, so no free-form biological-reasoning claim is made. See
+[`reports/agent_freeform_expert_review_protocol.md`](reports/agent_freeform_expert_review_protocol.md).
+
 ### Exploratory Sequence-Token Graph
 
 The OmniGene tokenizer contains 19,994 literal `▶...` DNA and 7,974 `◆...`

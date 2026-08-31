@@ -34,6 +34,7 @@ reports/traces/
 reports/figures/*.html
 reports/figures/*.svg
 /reports/results/
+/reports/agent_expert_review_package/
 
 # Intermediate Agent prompt/selector sweeps. Final selected reports are tracked.
 /reports/agent_evidence_eval*.md

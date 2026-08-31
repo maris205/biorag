@@ -602,3 +602,56 @@ top-200 diagnostics localize the failure to generic sequence representation,
 not missing collection records. Full details are in
 `reports/r2r_text_control_qwen3_06b.md`; the integration contract is in
 `docs/R2R_APPLICATION.md`.
+
+## Free-form Assessor-Blinded Agent Pilot
+
+Freeze the 30-case sample before generating free-form answers. Selection is
+balanced across three reference-label-density strata and does not use retrieval
+outcomes:
+
+```bash
+python scripts/prepare_agent_expert_review.py
+
+python scripts/fetch_pubmed_metadata.py \
+  --input reports/results/agent_expert_review/metadata_pmids.jsonl \
+  --output reports/results/agent_expert_review/pubmed_metadata.jsonl \
+  --batch-size 100 --delay 0.4
+```
+
+Generate each route with the same Qwen3.5-9B BF16 executor. Use
+`--evidence-mode graph_idf` only for the final DAG route; the other four routes
+use `raw`:
+
+```bash
+QWEN35_MODEL=/path/to/Qwen3.5-9B
+CUDA_VISIBLE_DEVICES=0 TRANSFORMERS_OFFLINE=1 \
+python scripts/generate_agent_freeform.py \
+  --model "$QWEN35_MODEL" \
+  --route combined_blast_vector_dag \
+  --packs reports/results/agent_application_ablation/combined_blast_vector_dag.jsonl \
+  --evidence-mode graph_idf \
+  --output reports/results/agent_expert_review/freeform_combined_blast_vector_dag.json
+```
+
+Repeat for `no_retrieval`, `r2r_text_only`, `sequence_vector`, and
+`combined_blast_vector` with their same-named pack files. Then build the
+balanced, assessor-blinded package:
+
+```bash
+python scripts/build_agent_expert_review.py
+```
+
+Share only `reports/agent_expert_review_package/evaluator/`. Keep the
+`organizer/` route key closed until both reviewers return complete forms. Score
+locked forms with:
+
+```bash
+python scripts/summarize_agent_expert_review.py \
+  reviewer_1.csv reviewer_2.csv
+```
+
+The frozen run contains 30 queries and 150 generated notes, resolves 431/431
+requested PubMed records, and peaks at 17.83 GiB on the RTX 4080. Automatic
+GO/PMID overlap and citation checks are reported in
+`reports/agent_freeform_expert_review_protocol.md`; they are diagnostics, not a
+substitute for the pending biological expert scores.

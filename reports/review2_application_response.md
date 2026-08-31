@@ -17,6 +17,7 @@ downstream Agent ablation rather than another DNA encoder sweep.
 | Generator choice should not define the contribution | Retrieval packs are frozen independently of the generator; Qwen3.5 is the main executor and Qwen2.5 is retained as a robustness reference |
 | Unknown evidence should not trigger invention | Added evidence-aware abstention prompts and scoring for empty evidence packs |
 | Deployment should be realistic | R2R handles CRUD, collections, text retrieval, and Agent APIs; BioRAG supplies sequence retrieval, BLAST, typed graph paths, and evidence provenance |
+| Structured identifiers are narrower than scientific usefulness | Froze a 30-case, five-route free-form Qwen3.5 pilot with a balanced assessor-blinded package, two-reviewer rubric, and case-level paired analysis; ratings remain pending |
 
 ## Completed Fixed-Generator Result
 
@@ -55,10 +56,21 @@ text/mixed documents, 22,939 entities, and 63,651 explicit relationships. The
 separate text-only control is now a completed live deployment result rather
 than a local proxy.
 
+The follow-up free-form package samples 30 frozen test queries before
+generation, with equal single-GO/sparse-literature, single-GO/dense-literature,
+and multi-GO strata. Five routes produce 150 evidence notes with one fixed
+Qwen3.5-9B executor. The evaluator bundle uses a balanced Latin square and has
+zero held-out-accession or route-name exposure. Automatic exact-ID checks are
+non-monotonic: sequence routing recovers non-zero GO/PMID F1 over R2R, BLAST
+fusion does not improve this 30-case string metric, and DAG lowers GO F1 while
+raising PMID F1 and eliminating pack-external identifiers. These checks are
+not presented as expert or biological-correctness results; two independent
+review forms are still required.
+
 ## Still Required for a Stronger Biological Claim
 
 - family/Pfam-cluster, species, temporal, or database-version holdout;
-- free-form expert evaluation beyond GO/PMID identifier execution;
+- completion of the frozen two-reviewer free-form assessment beyond GO/PMID identifier execution;
 - larger sequence-to-literature resources and title/abstract coverage;
 - end-to-end concurrent latency on the deployed application;
 - controlled biological case studies that do not infer mechanism from graph
